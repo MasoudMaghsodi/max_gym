@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/exercise_category.dart';
 import '../models/workout_day.dart';
-import 'exercise_row.dart';
+import '../models/training_technique.dart';
+import 'exerciseWidgets/exercise_row.dart';
 import 'category_dialog.dart';
 
 class DayCard extends StatelessWidget {
@@ -22,6 +23,10 @@ class DayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // دریافت لیست تکنیک‌های تمرینی از مدل‌ها
+    final List<String> techniques =
+        trainingTechniques.map((technique) => technique.name).toList();
+
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
@@ -66,9 +71,12 @@ class DayCard extends StatelessWidget {
                         availableExercises: day.categories
                             .expand((cat) => cat.exercises)
                             .toList(),
+                        availableTechniques: techniques,
                         onExerciseChanged: (exercise) {
                           day.exercises[index] = exercise;
                         },
+                        index: index +
+                            1, // اضافه کردن شماره تمرین که از ۱ شروع شود
                       )),
             ],
           ],

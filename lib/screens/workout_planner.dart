@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:max_gym/models/workout_exercise.dart';
 import 'package:share_plus/share_plus.dart';
-import '../models/exercise_category.dart';
+import '../models/exercise_data.dart';
 import '../models/workout_day.dart';
 import '../widgets/day_card.dart';
 import '../utils/pdf_generator.dart';
@@ -15,16 +15,6 @@ class WorkoutPlanner extends StatefulWidget {
 }
 
 class _WorkoutPlannerState extends State<WorkoutPlanner> {
-  final List<ExerciseCategory> categories = [
-    ExerciseCategory('سینه', ['پرس سینه', 'پرس بالا سینه', 'کراس اور']),
-    ExerciseCategory('پشت بازو', ['پشت بازو هالتر', 'کیک بک', 'دیپ']),
-    ExerciseCategory('زیر بغل', ['لت دستگاه', 'بارفیکس', 'زیربغل هالتر']),
-    ExerciseCategory('پا', ['اسکوات', 'پرس پا', 'لانج']),
-    ExerciseCategory('سرشانه', ['نشر از جانب', 'پرس سرشانه', 'فلای معکوس']),
-    ExerciseCategory('فول بادی', ['برپی', 'جامپ اسکوات', 'پوش آپ']),
-    ExerciseCategory('هوازی', ['دوچرخه', 'تردمیل', 'طناب زدن']),
-  ];
-
   List<WorkoutDay> workoutDays = [];
   TextEditingController athleteName = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -72,7 +62,7 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
             ),
           )
         ],
-        title: Text(
+        title: const Text(
           'باشگاه مکس',
           style: TextStyle(
             color: Colors.white,
@@ -83,22 +73,22 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               TextFormField(
                 controller: athleteName,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'نام ورزشکار',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
                     value!.isEmpty ? 'نام را وارد کنید' : null,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ...workoutDays.map((day) => DayCard(
                     day: day,
-                    categories: categories,
+                    categories: exerciseCategories,
                     onCategoryAdded: (category) {
                       setState(() => day.categories.add(category));
                     },
@@ -120,10 +110,10 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[900],
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15),
                     ),
-                    child: Text(
+                    child: const Text(
                       'پیش‌نمایش PDF',
                       style: TextStyle(
                         color: Colors.white,
@@ -141,10 +131,10 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[800],
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15),
                     ),
-                    child: Text(
+                    child: const Text(
                       'ذخیره PDF',
                       style: TextStyle(
                         color: Colors.white,
