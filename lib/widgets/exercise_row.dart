@@ -14,10 +14,27 @@ class ExerciseRow extends StatefulWidget {
   });
 
   @override
-  State<ExerciseRow> createState() => _ExerciseRowState();
+  _ExerciseRowState createState() => _ExerciseRowState();
 }
 
 class _ExerciseRowState extends State<ExerciseRow> {
+  String? selectedExercise;
+  String? optionalExercise;
+  int? selectedSets;
+  int? selectedReps;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedExercise =
+        widget.exercise.name.isNotEmpty ? widget.exercise.name : null;
+    selectedSets = widget.exercise.sets > 0 ? widget.exercise.sets : null;
+    selectedReps = widget.exercise.reps > 0 ? widget.exercise.reps : null;
+    optionalExercise = widget.exercise.superSet?.isNotEmpty ?? false
+        ? widget.exercise.superSet
+        : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -25,14 +42,14 @@ class _ExerciseRowState extends State<ExerciseRow> {
       child: Row(
         children: [
           Expanded(
-            flex: 3,
+            flex: 2,
             child: _buildDropdown<String>(
-              value:
-                  widget.exercise.name.isNotEmpty ? widget.exercise.name : null,
+              value: selectedExercise,
               hint: 'انتخاب تمرین',
               items: widget.availableExercises,
               onChanged: (value) {
                 setState(() {
+                  selectedExercise = value;
                   widget.exercise.name = value!;
                   widget.onExerciseChanged(widget.exercise);
                 });
@@ -40,12 +57,28 @@ class _ExerciseRowState extends State<ExerciseRow> {
             ),
           ),
           Expanded(
+            flex: 2,
+            child: _buildDropdown<String>(
+              value: optionalExercise,
+              hint: 'سوپرست',
+              items: widget.availableExercises,
+              onChanged: (value) {
+                setState(() {
+                  optionalExercise = value;
+                  widget.exercise.superSet = value;
+                  widget.onExerciseChanged(widget.exercise);
+                });
+              },
+            ),
+          ),
+          Expanded(
             child: _buildDropdown<int>(
-              value: widget.exercise.sets > 0 ? widget.exercise.sets : null,
+              value: selectedSets,
               hint: 'ست',
               items: List.generate(10, (i) => i + 1),
               onChanged: (value) {
                 setState(() {
+                  selectedSets = value;
                   widget.exercise.sets = value!;
                   widget.onExerciseChanged(widget.exercise);
                 });
@@ -54,25 +87,17 @@ class _ExerciseRowState extends State<ExerciseRow> {
           ),
           Expanded(
             child: _buildDropdown<int>(
-              value: widget.exercise.reps > 0 ? widget.exercise.reps : null,
+              value: selectedReps,
               hint: 'تکرار',
               items: List.generate(15, (i) => (i + 1) * 2),
               onChanged: (value) {
                 setState(() {
+                  selectedReps = value;
                   widget.exercise.reps = value!;
                   widget.onExerciseChanged(widget.exercise);
                 });
               },
             ),
-          ),
-          Checkbox(
-            value: widget.exercise.isSuperset,
-            onChanged: (value) {
-              setState(() {
-                widget.exercise.isSuperset = value!;
-                widget.onExerciseChanged(widget.exercise);
-              });
-            },
           ),
         ],
       ),

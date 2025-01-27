@@ -52,8 +52,10 @@ class PdfGenerator {
   }
 
   static Future<pw.Font> _loadFont() async {
-    final ttf = await rootBundle.load("assets/fonts/Vazirmatn-Regular.ttf");
-    return pw.Font.ttf(ttf);
+    final ByteData bytes =
+        await rootBundle.load('assets/fonts/Vazirmatn-Regular.ttf');
+    final pw.Font ttf = pw.Font.ttf(bytes);
+    return ttf;
   }
 
   static void _addHeaderPage(
@@ -63,13 +65,25 @@ class PdfGenerator {
         textDirection: pw.TextDirection.rtl,
         theme: pw.ThemeData.withFont(base: font),
         build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
-            pw.Header(text: 'MAX GYM - برنامه ورزشی', level: 1),
+            pw.Container(
+              alignment: pw.Alignment.center,
+              child: pw.Header(
+                text: 'MAX GYM - برنامه ورزشی',
+                level: 1,
+                textStyle: pw.TextStyle(
+                  font: font,
+                ),
+              ),
+            ),
             pw.SizedBox(height: 20),
             pw.Text('نام ورزشکار: $athleteName'),
+            pw.SizedBox(height: 20),
             pw.Text(
                 'آدرس باشگاه: آذربایجان غربی - میاندوآب - خیابان ۲۴ متری - جنب فروشگاه اسنوا'),
-            pw.SizedBox(height: 30),
+            pw.SizedBox(height: 20),
+            pw.Text("مربی : استاد بهزاد بهزاد فر"),
           ],
         ),
       ),
@@ -82,30 +96,46 @@ class PdfGenerator {
         textDirection: pw.TextDirection.rtl,
         theme: pw.ThemeData.withFont(base: font),
         build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Header(text: day.dayName, level: 2),
+            pw.Container(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(
+                day.dayName,
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              padding: const pw.EdgeInsets.all(8.0),
+            ),
             pw.Table(
               border: pw.TableBorder.all(),
               columnWidths: {
                 0: const pw.FlexColumnWidth(),
                 1: const pw.FlexColumnWidth(),
-                2: const pw.FlexColumnWidth(),
               },
               children: [
                 pw.TableRow(
                   children: [
-                    _tableHeaderCell('تمرین'),
-                    _tableHeaderCell('ست/تکرار'),
-                    _tableHeaderCell('سوپرست'),
+                    _tableHeaderCell('ست/تکرار', font),
+                    _tableHeaderCell('تمرین', font),
                   ],
                 ),
-                ...day.exercises.map((exercise) => pw.TableRow(
-                      children: [
-                        _tableCell(exercise.name),
-                        _tableCell('${exercise.sets} x ${exercise.reps}'),
-                        _tableCell(exercise.isSuperset ? '✅' : '❌'),
-                      ],
-                    )),
+                ...day.exercises.map(
+                  (exercise) => pw.TableRow(
+                    children: [
+                      _tableCell('${exercise.sets} x ${exercise.reps}', font),
+                      _tableCell(
+                        exercise.superSet?.isNotEmpty ?? false
+                            ? '${exercise.name} + ${exercise.superSet}'
+                            : exercise.name,
+                        font,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],
@@ -114,14 +144,24 @@ class PdfGenerator {
     );
   }
 
-  static pw.Widget _tableHeaderCell(String text) => pw.Padding(
-        child:
-            pw.Text(text, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+  static pw.Widget _tableHeaderCell(String text, pw.Font font) => pw.Padding(
+        child: pw.Text(
+          text,
+          style: pw.TextStyle(
+            font: font,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
         padding: const pw.EdgeInsets.all(5),
       );
 
-  static pw.Widget _tableCell(String text) => pw.Padding(
-        child: pw.Text(text),
+  static pw.Widget _tableCell(String text, pw.Font font) => pw.Padding(
+        child: pw.Text(
+          text,
+          style: pw.TextStyle(
+            font: font,
+          ),
+        ),
         padding: const pw.EdgeInsets.all(5),
       );
 

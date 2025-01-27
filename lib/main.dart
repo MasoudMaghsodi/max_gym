@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/workout_planner.dart';
 
-void main() => runApp(MaxGymApp());
+void main() => runApp(const MaxGymApp());
 
 class MaxGymApp extends StatelessWidget {
   const MaxGymApp({super.key});
@@ -14,13 +14,13 @@ class MaxGymApp extends StatelessWidget {
         primaryColor: Colors.green[800],
         secondaryHeaderColor: Colors.black,
         fontFamily: "Vazirmatn",
-        appBarTheme: AppBarTheme(
-          color: Colors.green[900],
+        appBarTheme: const AppBarTheme(
+          color: Color(0xFF1B5E20),
         ),
       ),
       home: Directionality(
         textDirection: TextDirection.rtl,
-        child: WorkoutPlanner(),
+        child: const WorkoutPlanner(),
       ),
     );
   }

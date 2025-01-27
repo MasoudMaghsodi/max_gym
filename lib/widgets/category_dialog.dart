@@ -14,7 +14,7 @@ class CategoryDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("انتخاب دسته‌بندی"),
+      title: const Text("انتخاب دسته‌بندی"),
       content: SingleChildScrollView(
         child: Column(
           children: categories

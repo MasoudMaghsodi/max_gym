@@ -23,14 +23,15 @@ class DayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             ListTile(
               title: Text(day.dayName,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
               trailing: Switch(
                 value: day.isRestDay,
                 onChanged: onRestDayChanged,
@@ -45,7 +46,7 @@ class DayCard extends StatelessWidget {
                         onDeleted: () => onCategoryRemoved(cat),
                       )),
                   IconButton(
-                    icon: Icon(Icons.add),
+                    icon: const Icon(Icons.add),
                     onPressed: () => showDialog(
                       context: context,
                       builder: (context) => CategoryDialog(
