@@ -9,13 +9,18 @@ import 'workout_page.dart';
 import 'pdf_utils.dart';
 
 class PdfGenerator {
-  static Future<void> generatePDF(BuildContext context,
-      List<WorkoutDay> workoutDays, String athleteName) async {
+  static Future<void> generatePDF(
+      BuildContext context,
+      List<WorkoutDay> workoutDays,
+      String athleteName,
+      Map<String, String> profileData) async {
     try {
       final pdf = pw.Document();
       final font = await loadFont();
+      final date = profileData['date'] ?? ''; // گرفتن تاریخ از پروفایل
 
-      addHeaderPage(pdf, font, athleteName);
+      addHeaderPage(pdf, font, athleteName, profileData,
+          date); // اضافه کردن اطلاعات پروفایل و تاریخ
 
       for (var day in workoutDays) {
         if (!day.isRestDay) {
@@ -33,12 +38,14 @@ class PdfGenerator {
     }
   }
 
-  static Future<File> savePDF(
-      List<WorkoutDay> workoutDays, String athleteName) async {
+  static Future<File> savePDF(List<WorkoutDay> workoutDays, String athleteName,
+      Map<String, String> profileData) async {
     final pdf = pw.Document();
     final font = await loadFont();
+    final date = profileData['date'] ?? ''; // گرفتن تاریخ از پروفایل
 
-    addHeaderPage(pdf, font, athleteName);
+    addHeaderPage(pdf, font, athleteName, profileData,
+        date); // اضافه کردن اطلاعات پروفایل و تاریخ
 
     for (var day in workoutDays) {
       if (!day.isRestDay) {

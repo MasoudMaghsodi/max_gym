@@ -40,6 +40,7 @@ dependencies:
   pdf: ^3.11.2
   share_plus: ^10.1.4
   printing: ^5.14.0
+  shamsi_date: ^1.0.4
 
 
 dev_dependencies:

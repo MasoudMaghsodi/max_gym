@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:max_gym/models/workout_exercise.dart';
-import 'package:share_plus/share_plus.dart';
+import '../models/workout_exercise.dart';
 import '../models/exercise_data.dart';
 import '../models/workout_day.dart';
 import '../widgets/day_card.dart';
 import '../utils/pdf_generator.dart';
-import '../widgets/profile_form.dart'; // اضافه کردن این خط
+import 'package:share_plus/share_plus.dart';
 
-class WorkoutPlanner extends StatefulWidget {
-  const WorkoutPlanner({super.key});
+class WorkoutPlannerScreen extends StatefulWidget {
+  final Map<String, String> profileData;
+
+  const WorkoutPlannerScreen({super.key, required this.profileData});
 
   @override
   // ignore: library_private_types_in_public_api
-  _WorkoutPlannerState createState() => _WorkoutPlannerState();
+  _WorkoutPlannerScreenState createState() => _WorkoutPlannerScreenState();
 }
 
-class _WorkoutPlannerState extends State<WorkoutPlanner> {
+class _WorkoutPlannerScreenState extends State<WorkoutPlannerScreen> {
   List<WorkoutDay> workoutDays = [];
-  TextEditingController athleteName = TextEditingController();
-  Map<String, String> profileData = {}; // اضافه کردن این خط
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -28,22 +27,41 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
   }
 
   void _initializeDays() {
-    List<String> days = [
-      'شنبه',
-      'یکشنبه',
-      'دوشنبه',
-      'سه‌شنبه',
-      'چهارشنبه',
-      'پنجشنبه',
-    ];
-    for (var day in days) {
-      workoutDays.add(WorkoutDay(
-        day,
-        [],
-        List.generate(8, (index) => WorkoutExercise('', 0, 0)),
-        isRestDay: day == 'تعطیل',
-      ));
-    }
+    setState(() {
+      List<String> days = [
+        'شنبه',
+        'یکشنبه',
+        'دوشنبه',
+        'سه‌شنبه',
+        'چهارشنبه',
+        'پنجشنبه',
+      ];
+      workoutDays = days
+          .map((day) => WorkoutDay(
+                day,
+                [],
+                List.generate(8, (index) => WorkoutExercise('', 0, 0)),
+                isRestDay: day == 'تعطیل',
+              ))
+          .toList();
+    });
+  }
+
+  void _resetSelections() {
+    setState(() {
+      for (var day in workoutDays) {
+        day.exercises = List.generate(8, (index) => WorkoutExercise('', 0, 0));
+        day.categories.clear();
+        day.isRestDay = false;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('همه انتخاب‌ها ریست شدند'),
+        backgroundColor: Colors.orange,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   void _showSnackBar(String message, Color color) {
@@ -60,27 +78,14 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text('برنامه‌ریزی تمرین'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(50),
-              child: Image.asset(
-                'assets/image/max.jpg',
-                fit: BoxFit.fill,
-                width: 45,
-                height: 50,
-              ),
-            ),
-          )
-        ],
-        title: const Text(
-          'باشگاه مکس',
-          style: TextStyle(
-            color: Colors.white,
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _resetSelections, // اتصال دکمه به تابع ریست
+            tooltip: 'ریست کردن همه انتخاب‌ها',
           ),
-        ),
-        centerTitle: false,
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -88,18 +93,6 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              ProfileForm(
-                // اضافه کردن این فرم
-                onProfileSubmit: (data) {
-                  setState(() {
-                    profileData = data;
-                    athleteName.text =
-                        "${data['firstName']} ${data['lastName']}";
-                  });
-                  _showSnackBar('اطلاعات با موفقیت ذخیره شد', Colors.green);
-                },
-              ),
-              const SizedBox(height: 20),
               ...workoutDays.map((day) => DayCard(
                     day: day,
                     categories: exerciseCategories,
@@ -122,8 +115,8 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
                         PdfGenerator.generatePDF(
                           context,
                           workoutDays,
-                          athleteName.text,
-                          profileData, // اضافه کردن این خط
+                          "${widget.profileData['firstName']} ${widget.profileData['lastName']}",
+                          widget.profileData,
                         );
                       } else {
                         _showSnackBar(
@@ -148,8 +141,8 @@ class _WorkoutPlannerState extends State<WorkoutPlanner> {
                       if (_formKey.currentState!.validate()) {
                         final file = await PdfGenerator.savePDF(
                           workoutDays,
-                          athleteName.text,
-                          profileData, // اضافه کردن این خط
+                          "${widget.profileData['firstName']} ${widget.profileData['lastName']}",
+                          widget.profileData,
                         );
                         await Share.shareXFiles([XFile(file.path)]);
                       } else {

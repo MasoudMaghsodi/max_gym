@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/workout_planner.dart';
+import 'screens/main_screen.dart'; // تغییر دادن import برای استفاده از MainScreen
 
 void main() => runApp(const MaxGymApp());
 
@@ -20,7 +20,7 @@ class MaxGymApp extends StatelessWidget {
       ),
       home: Directionality(
         textDirection: TextDirection.rtl,
-        child: const WorkoutPlanner(),
+        child: MainScreen(), // استفاده از MainScreen به عنوان صفحه اصلی
       ),
     );
   }
