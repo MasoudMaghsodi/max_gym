@@ -41,6 +41,7 @@ dependencies:
   share_plus: ^10.1.4
   printing: ^5.14.0
   shamsi_date: ^1.0.4
+  shared_preferences: ^2.4.0
 
 
 dev_dependencies:

@@ -1,10 +1,14 @@
 class TrainingTechnique {
+  // نام تکنیک تمرینی
   final String name;
+  // توضیح تکنیک تمرینی
   final String description;
 
+  // سازنده کلاس برای مقداردهی اولیه تکنیک تمرینی
   TrainingTechnique(this.name, this.description);
 }
 
+// لیست تکنیک‌های تمرینی موجود
 final List<TrainingTechnique> trainingTechniques = [
   TrainingTechnique(
       'TUT (Time Under Tension)', 'مدت زمان تنش عضلانی در طول یک ست تمرین.'),

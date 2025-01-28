@@ -1,0 +1,24 @@
+| lib  |              |exercise_category.dart
+       |              |exercise_data.dart
+       | models ====  |preferences_manager.dart
+       |              |training_technique.dart
+       |              |workout_day.dart
+       |              |workout_exercise.dart
+       |
+       |              |exercise_detail_screen.dart
+       |              |exercise_overview_screen.dart
+       |              |main_screen.dart
+       | screens ==== |profile_screen.dart
+       |              |workout_planner_screen.dart
+       |
+       |              |header_page.dart
+       | utils =====  |pdf_generator.dart
+       |              |pdf_utils.dart
+       |              |workout_page.dart
+       |
+       |              |exerciseWidgets == (exercise_card.dart/exercise_dropdown.dart/exercise_list_item.dart/exercise_reps_sets.dart/exercise_row.dart/exercise_section_title.dart)
+       |              |profileWidgets == (custom_dropdown_field.dart/custom_text_field.dart/profile_form.dart/section_header.dart)
+       | widgets ==== |category_dialog.dart
+       |              |day_card.dart
+       |
+       | main.dart    

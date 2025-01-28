@@ -5,11 +5,16 @@ import 'exercise_reps_sets.dart';
 import 'exercise_section_title.dart';
 
 class ExerciseRow extends StatefulWidget {
+  // مدل تمرین
   final WorkoutExercise exercise;
+  // لیست تمرینات موجود
   final List<String> availableExercises;
+  // لیست تکنیک‌های تمرینی موجود
   final List<String> availableTechniques;
+  // تابعی که تغییرات تمرین را پردازش می‌کند
   final Function(WorkoutExercise) onExerciseChanged;
-  final int index; // اضافه کردن شماره تمرین
+  // شماره تمرین
+  final int index;
 
   const ExerciseRow({
     super.key,
@@ -17,7 +22,7 @@ class ExerciseRow extends StatefulWidget {
     required this.availableExercises,
     required this.availableTechniques,
     required this.onExerciseChanged,
-    required this.index, // اضافه کردن شماره تمرین
+    required this.index,
   });
 
   @override
@@ -69,18 +74,22 @@ class _ExerciseRowState extends State<ExerciseRow> {
     final isWideScreen = screenWidth > 600;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding:
+          const EdgeInsets.symmetric(vertical: 8.0), // فاصله عمودی بین ردیف‌ها
       child: Card(
         elevation: 4.0,
-        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+        margin: const EdgeInsets.symmetric(
+            horizontal: 8.0), // فاصله افقی بین ردیف‌ها
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // عنوان بخش تمرین اصلی
               ExerciseSectionTitle(
                   title:
                       'تمرین اصلی ${widget.index}'), // اضافه کردن شماره تمرین
+              // انتخاب تمرین
               ExerciseDropdown(
                 value: selectedExercise,
                 hint: 'انتخاب تمرین',
@@ -93,6 +102,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
+              // انتخاب تکنیک
               ExerciseDropdown(
                 value: selectedTechnique,
                 hint: 'انتخاب تکنیک',
@@ -105,6 +115,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
+              // نمایش ست‌ها و تکرارها در صفحه عریض
               if (isWideScreen)
                 Row(
                   children: [
@@ -137,6 +148,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             })),
                   ],
                 )
+              // نمایش ست‌ها و تکرارها در صفحه کوچک
               else
                 Column(
                   children: [
@@ -168,7 +180,9 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   ],
                 ),
               const Divider(thickness: 1.5),
+              // عنوان بخش سوپرست
               ExerciseSectionTitle(title: 'سوپرست'),
+              // انتخاب تمرین سوپرست
               ExerciseDropdown(
                 value: superSetExercise,
                 hint: 'انتخاب تمرین سوپرست',
@@ -181,6 +195,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
+              // انتخاب تکنیک سوپرست
               ExerciseDropdown(
                 value: superSetTechnique,
                 hint: 'انتخاب تکنیک سوپرست',
@@ -193,6 +208,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
+              // تعداد تکرارهای سوپرست
               ExerciseRepsSets(
                   hint: 'تکرار سوپرست',
                   value: superSetReps,
@@ -206,7 +222,9 @@ class _ExerciseRowState extends State<ExerciseRow> {
                     });
                   }),
               const Divider(thickness: 1.5),
+              // عنوان بخش تریست
               ExerciseSectionTitle(title: 'تریست'),
+              // انتخاب تمرین تریست
               ExerciseDropdown(
                 value: triSetExercise,
                 hint: 'انتخاب تمرین تریست',
@@ -219,6 +237,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
+              // انتخاب تکنیک تریست
               ExerciseDropdown(
                 value: triSetTechnique,
                 hint: 'انتخاب تکنیک تریست',
@@ -231,6 +250,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
+              // تعداد تکرارهای تریست
               ExerciseRepsSets(
                   hint: 'تکرار تریست',
                   value: triSetReps,

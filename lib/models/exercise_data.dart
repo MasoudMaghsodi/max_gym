@@ -1,5 +1,6 @@
 import '../models/exercise_category.dart';
 
+// لیست دسته‌بندی‌های تمرینات موجود
 final List<ExerciseCategory> exerciseCategories = [
   ExerciseCategory('سینه', [
     'پرس سینه',

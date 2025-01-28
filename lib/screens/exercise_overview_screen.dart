@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../models/preferences_manager.dart';
 import '../widgets/exerciseWidgets/exercise_card.dart';
+import '../../models/preferences_manager.dart';
 
-class WorkoutPlannerScreen extends StatefulWidget {
-  const WorkoutPlannerScreen(
-      {super.key, required Map<String, String> profileData});
+class ExerciseOverviewScreen extends StatefulWidget {
+  const ExerciseOverviewScreen({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
-  _WorkoutPlannerScreenState createState() => _WorkoutPlannerScreenState();
+  _ExerciseOverviewScreenState createState() => _ExerciseOverviewScreenState();
 }
 
-class _WorkoutPlannerScreenState extends State<WorkoutPlannerScreen> {
+class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
+  // نقشه‌ای برای ذخیره تمرینات هر روز
   final Map<String, String> _exercises = {};
 
   @override
@@ -20,6 +20,7 @@ class _WorkoutPlannerScreenState extends State<WorkoutPlannerScreen> {
     _loadAllExercises();
   }
 
+  // بارگذاری تمامی تمرینات ذخیره‌شده
   Future<void> _loadAllExercises() async {
     await PreferencesManager.init();
     setState(() {
@@ -33,12 +34,14 @@ class _WorkoutPlannerScreenState extends State<WorkoutPlannerScreen> {
     });
   }
 
+  // به‌روزرسانی تمرینات در نقشه
   void _refreshExercises() {
     setState(() {
       _loadAllExercises();
     });
   }
 
+  // ریست کردن تمامی تمرینات ذخیره‌شده
   Future<void> _resetAllExercises() async {
     await PreferencesManager.clear();
     ScaffoldMessenger.of(context).showSnackBar(
