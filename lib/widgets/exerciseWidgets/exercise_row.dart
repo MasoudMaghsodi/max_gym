@@ -5,15 +5,10 @@ import 'exercise_reps_sets.dart';
 import 'exercise_section_title.dart';
 
 class ExerciseRow extends StatefulWidget {
-  // مدل تمرین
   final WorkoutExercise exercise;
-  // لیست تمرینات موجود
   final List<String> availableExercises;
-  // لیست تکنیک‌های تمرینی موجود
   final List<String> availableTechniques;
-  // تابعی که تغییرات تمرین را پردازش می‌کند
   final Function(WorkoutExercise) onExerciseChanged;
-  // شماره تمرین
   final int index;
 
   const ExerciseRow({
@@ -35,12 +30,17 @@ class _ExerciseRowState extends State<ExerciseRow> {
   String? selectedTechnique;
   String? superSetExercise;
   int? superSetReps;
+  int? superSetSets;
   String? superSetTechnique;
   String? triSetExercise;
   int? triSetReps;
+  int? triSetSets;
   String? triSetTechnique;
   int? selectedSets;
   int? selectedReps;
+
+  bool isSuperSetEnabled = false;
+  bool isTriSetEnabled = false;
 
   @override
   void initState() {
@@ -56,6 +56,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
         ? widget.exercise.superSet
         : null;
     superSetReps = widget.exercise.superSetReps;
+    superSetSets = widget.exercise.superSetSets;
     superSetTechnique = widget.exercise.superSetTechnique?.isNotEmpty ?? false
         ? widget.exercise.superSetTechnique
         : null;
@@ -63,9 +64,12 @@ class _ExerciseRowState extends State<ExerciseRow> {
         ? widget.exercise.triSet
         : null;
     triSetReps = widget.exercise.triSetReps;
+    triSetSets = widget.exercise.triSetSets;
     triSetTechnique = widget.exercise.triSetTechnique?.isNotEmpty ?? false
         ? widget.exercise.triSetTechnique
         : null;
+    isSuperSetEnabled = selectedExercise != null;
+    isTriSetEnabled = superSetExercise != null;
   }
 
   @override
@@ -74,39 +78,33 @@ class _ExerciseRowState extends State<ExerciseRow> {
     final isWideScreen = screenWidth > 600;
 
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(vertical: 8.0), // فاصله عمودی بین ردیف‌ها
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Card(
         elevation: 4.0,
-        margin: const EdgeInsets.symmetric(
-            horizontal: 8.0), // فاصله افقی بین ردیف‌ها
+        margin: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // عنوان بخش تمرین اصلی
-              ExerciseSectionTitle(
-                  title:
-                      'تمرین اصلی ${widget.index}'), // اضافه کردن شماره تمرین
-              // انتخاب تمرین
+              ExerciseSectionTitle(title: 'تمرین اصلی ${widget.index}'),
               ExerciseDropdown(
                 value: selectedExercise,
                 hint: 'انتخاب تمرین',
-                items: widget.availableExercises,
+                items: widget.availableExercises.toSet().toList(),
                 onChanged: (value) {
                   setState(() {
                     selectedExercise = value;
                     widget.exercise.name = value!;
                     widget.onExerciseChanged(widget.exercise);
+                    isSuperSetEnabled = true;
                   });
                 },
               ),
-              // انتخاب تکنیک
               ExerciseDropdown(
                 value: selectedTechnique,
                 hint: 'انتخاب تکنیک',
-                items: widget.availableTechniques,
+                items: widget.availableTechniques.toSet().toList(),
                 onChanged: (value) {
                   setState(() {
                     selectedTechnique = value;
@@ -115,44 +113,11 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   });
                 },
               ),
-              // نمایش ست‌ها و تکرارها در صفحه عریض
               if (isWideScreen)
                 Row(
                   children: [
                     Expanded(
-                        child: ExerciseRepsSets(
-                            hint: 'ست',
-                            value: selectedSets,
-                            count: 6,
-                            increment: 1,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedSets = value;
-                                widget.exercise.sets = value!;
-                                widget.onExerciseChanged(widget.exercise);
-                              });
-                            })),
-                    const SizedBox(width: 16),
-                    Expanded(
-                        child: ExerciseRepsSets(
-                            hint: 'تکرار',
-                            value: selectedReps,
-                            count: 15,
-                            increment: 1,
-                            onChanged: (value) {
-                              setState(() {
-                                selectedReps = value;
-                                widget.exercise.reps = value!;
-                                widget.onExerciseChanged(widget.exercise);
-                              });
-                            })),
-                  ],
-                )
-              // نمایش ست‌ها و تکرارها در صفحه کوچک
-              else
-                Column(
-                  children: [
-                    ExerciseRepsSets(
+                      child: ExerciseRepsSets(
                         hint: 'ست',
                         value: selectedSets,
                         count: 6,
@@ -163,9 +128,12 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             widget.exercise.sets = value!;
                             widget.onExerciseChanged(widget.exercise);
                           });
-                        }),
-                    const SizedBox(height: 8),
-                    ExerciseRepsSets(
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ExerciseRepsSets(
                         hint: 'تکرار',
                         value: selectedReps,
                         count: 15,
@@ -176,93 +144,260 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             widget.exercise.reps = value!;
                             widget.onExerciseChanged(widget.exercise);
                           });
-                        }),
+                        },
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    ExerciseRepsSets(
+                      hint: 'ست',
+                      value: selectedSets,
+                      count: 6,
+                      increment: 1,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedSets = value;
+                          widget.exercise.sets = value!;
+                          widget.onExerciseChanged(widget.exercise);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ExerciseRepsSets(
+                      hint: 'تکرار',
+                      value: selectedReps,
+                      count: 15,
+                      increment: 1,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedReps = value;
+                          widget.exercise.reps = value!;
+                          widget.onExerciseChanged(widget.exercise);
+                        });
+                      },
+                    ),
                   ],
                 ),
-              const Divider(thickness: 1.5),
-              // عنوان بخش سوپرست
-              ExerciseSectionTitle(title: 'سوپرست'),
-              // انتخاب تمرین سوپرست
-              ExerciseDropdown(
-                value: superSetExercise,
-                hint: 'انتخاب تمرین سوپرست',
-                items: widget.availableExercises,
-                onChanged: (value) {
-                  setState(() {
-                    superSetExercise = value;
-                    widget.exercise.superSet = value;
-                    widget.onExerciseChanged(widget.exercise);
-                  });
-                },
-              ),
-              // انتخاب تکنیک سوپرست
-              ExerciseDropdown(
-                value: superSetTechnique,
-                hint: 'انتخاب تکنیک سوپرست',
-                items: widget.availableTechniques,
-                onChanged: (value) {
-                  setState(() {
-                    superSetTechnique = value;
-                    widget.exercise.superSetTechnique = value!;
-                    widget.onExerciseChanged(widget.exercise);
-                  });
-                },
-              ),
-              // تعداد تکرارهای سوپرست
-              ExerciseRepsSets(
-                  hint: 'تکرار سوپرست',
-                  value: superSetReps,
-                  count: 15,
-                  increment: 1,
-                  onChanged: (value) {
+              if (isSuperSetEnabled) ...[
+                const Divider(thickness: 1.5),
+                ListTile(
+                  title: Text('سوپرست'),
+                  trailing: Icon(
+                    isSuperSetEnabled ? Icons.expand_less : Icons.expand_more,
+                  ),
+                  onTap: () {
                     setState(() {
-                      superSetReps = value;
-                      widget.exercise.superSetReps = value!;
-                      widget.onExerciseChanged(widget.exercise);
+                      isSuperSetEnabled = !isSuperSetEnabled;
                     });
-                  }),
-              const Divider(thickness: 1.5),
-              // عنوان بخش تریست
-              ExerciseSectionTitle(title: 'تریست'),
-              // انتخاب تمرین تریست
-              ExerciseDropdown(
-                value: triSetExercise,
-                hint: 'انتخاب تمرین تریست',
-                items: widget.availableExercises,
-                onChanged: (value) {
-                  setState(() {
-                    triSetExercise = value;
-                    widget.exercise.triSet = value;
-                    widget.onExerciseChanged(widget.exercise);
-                  });
-                },
-              ),
-              // انتخاب تکنیک تریست
-              ExerciseDropdown(
-                value: triSetTechnique,
-                hint: 'انتخاب تکنیک تریست',
-                items: widget.availableTechniques,
-                onChanged: (value) {
-                  setState(() {
-                    triSetTechnique = value;
-                    widget.exercise.triSetTechnique = value!;
-                    widget.onExerciseChanged(widget.exercise);
-                  });
-                },
-              ),
-              // تعداد تکرارهای تریست
-              ExerciseRepsSets(
-                  hint: 'تکرار تریست',
-                  value: triSetReps,
-                  count: 15,
-                  increment: 1,
-                  onChanged: (value) {
+                  },
+                ),
+                if (isSuperSetEnabled) ...[
+                  ExerciseDropdown(
+                    value: superSetExercise,
+                    hint: 'انتخاب تمرین سوپرست',
+                    items: widget.availableExercises.toSet().toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        superSetExercise = value;
+                        widget.exercise.superSet = value;
+                        widget.onExerciseChanged(widget.exercise);
+                        isTriSetEnabled = true;
+                      });
+                    },
+                  ),
+                  ExerciseDropdown(
+                    value: superSetTechnique,
+                    hint: 'انتخاب تکنیک سوپرست',
+                    items: widget.availableTechniques.toSet().toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        superSetTechnique = value;
+                        widget.exercise.superSetTechnique = value!;
+                        widget.onExerciseChanged(widget.exercise);
+                      });
+                    },
+                  ),
+                  if (isWideScreen)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ExerciseRepsSets(
+                            hint: 'ست سوپرست',
+                            value: superSetSets,
+                            count: 6,
+                            increment: 1,
+                            onChanged: (value) {
+                              setState(() {
+                                superSetSets = value;
+                                widget.exercise.superSetSets = value!;
+                                widget.onExerciseChanged(widget.exercise);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ExerciseRepsSets(
+                            hint: 'تکرار سوپرست',
+                            value: superSetReps,
+                            count: 15,
+                            increment: 1,
+                            onChanged: (value) {
+                              setState(() {
+                                superSetReps = value;
+                                widget.exercise.superSetReps = value!;
+                                widget.onExerciseChanged(widget.exercise);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        ExerciseRepsSets(
+                          hint: 'ست سوپرست',
+                          value: superSetSets,
+                          count: 6,
+                          increment: 1,
+                          onChanged: (value) {
+                            setState(() {
+                              superSetSets = value;
+                              widget.exercise.superSetSets = value!;
+                              widget.onExerciseChanged(widget.exercise);
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        ExerciseRepsSets(
+                          hint: 'تکرار سوپرست',
+                          value: superSetReps,
+                          count: 15,
+                          increment: 1,
+                          onChanged: (value) {
+                            setState(() {
+                              superSetReps = value;
+                              widget.exercise.superSetReps = value!;
+                              widget.onExerciseChanged(widget.exercise);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ],
+              if (isTriSetEnabled) ...[
+                const Divider(thickness: 1.5),
+                ListTile(
+                  title: Text('تریست'),
+                  trailing: Icon(
+                    isTriSetEnabled ? Icons.expand_less : Icons.expand_more,
+                  ),
+                  onTap: () {
                     setState(() {
-                      triSetReps = value;
-                      widget.exercise.triSetReps = value!;
-                      widget.onExerciseChanged(widget.exercise);
+                      isTriSetEnabled = !isTriSetEnabled;
                     });
-                  }),
+                  },
+                ),
+                if (isTriSetEnabled) ...[
+                  ExerciseDropdown(
+                    value: triSetExercise,
+                    hint: 'انتخاب تمرین تریست',
+                    items: widget.availableExercises.toSet().toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        triSetExercise = value;
+                        widget.exercise.triSet = value;
+                        widget.onExerciseChanged(widget.exercise);
+                      });
+                    },
+                  ),
+                  ExerciseDropdown(
+                    value: triSetTechnique,
+                    hint: 'انتخاب تکنیک تریست',
+                    items: widget.availableTechniques.toSet().toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        triSetTechnique = value;
+                        widget.exercise.triSetTechnique = value!;
+                        widget.onExerciseChanged(widget.exercise);
+                      });
+                    },
+                  ),
+                  if (isWideScreen)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ExerciseRepsSets(
+                            hint: 'ست تریست',
+                            value: triSetSets,
+                            count: 6,
+                            increment: 1,
+                            onChanged: (value) {
+                              setState(() {
+                                triSetSets = value;
+                                widget.exercise.triSetSets = value!;
+                                widget.onExerciseChanged(widget.exercise);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ExerciseRepsSets(
+                            hint: 'تکرار تریست',
+                            value: triSetReps,
+                            count: 15,
+                            increment: 1,
+                            onChanged: (value) {
+                              setState(() {
+                                triSetReps = value;
+                                widget.exercise.triSetReps = value!;
+                                widget.onExerciseChanged(widget.exercise);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        ExerciseRepsSets(
+                          hint: 'ست تریست',
+                          value: triSetSets,
+                          count: 6,
+                          increment: 1,
+                          onChanged: (value) {
+                            setState(() {
+                              triSetSets = value;
+                              widget.exercise.triSetSets = value!;
+                              widget.onExerciseChanged(widget.exercise);
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        ExerciseRepsSets(
+                          hint: 'تکرار تریست',
+                          value: triSetReps,
+                          count: 15,
+                          increment: 1,
+                          onChanged: (value) {
+                            setState(() {
+                              triSetReps = value;
+                              widget.exercise.triSetReps = value!;
+                              widget.onExerciseChanged(widget.exercise);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ],
             ],
           ),
         ),

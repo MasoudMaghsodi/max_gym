@@ -12,10 +12,10 @@ class WorkoutDay {
   bool isRestDay;
 
   // سازنده کلاس برای مقداردهی اولیه روز تمرین
-  WorkoutDay(
-    this.dayName,
-    this.categories,
-    this.exercises, {
+  WorkoutDay({
+    required this.dayName,
+    required this.categories,
+    required this.exercises,
     this.isRestDay = false,
   });
 }

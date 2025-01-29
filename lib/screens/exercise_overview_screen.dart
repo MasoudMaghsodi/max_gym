@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import '../widgets/exerciseWidgets/exercise_card.dart';
 import '../../models/preferences_manager.dart';
+import '../../models/exercise_data.dart';
+import '../../models/workout_day.dart';
+import '../models/workout_exercise.dart';
+import '../widgets/day_card.dart';
+import 'exercise_detail_screen.dart';
 
 class ExerciseOverviewScreen extends StatefulWidget {
   const ExerciseOverviewScreen({super.key});
@@ -11,75 +15,140 @@ class ExerciseOverviewScreen extends StatefulWidget {
 }
 
 class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
-  // نقشه‌ای برای ذخیره تمرینات هر روز
-  final Map<String, String> _exercises = {};
+  final Map<String, WorkoutDay> _days = {};
 
   @override
   void initState() {
     super.initState();
-    _loadAllExercises();
+    _loadAllDays();
   }
 
-  // بارگذاری تمامی تمرینات ذخیره‌شده
-  Future<void> _loadAllExercises() async {
+  Future<void> _loadAllDays() async {
     await PreferencesManager.init();
     setState(() {
-      _exercises['شنبه'] = PreferencesManager.getString('شنبه') ?? '';
-      _exercises['یکشنبه'] = PreferencesManager.getString('یکشنبه') ?? '';
-      _exercises['دوشنبه'] = PreferencesManager.getString('دوشنبه') ?? '';
-      _exercises['سه‌شنبه'] = PreferencesManager.getString('سه‌شنبه') ?? '';
-      _exercises['چهارشنبه'] = PreferencesManager.getString('چهارشنبه') ?? '';
-      _exercises['پنج‌شنبه'] = PreferencesManager.getString('پنج‌شنبه') ?? '';
-      _exercises['جمعه'] = PreferencesManager.getString('جمعه') ?? '';
+      _days['شنبه'] = _getWorkoutDay('شنبه');
+      _days['یکشنبه'] = _getWorkoutDay('یکشنبه');
+      _days['دوشنبه'] = _getWorkoutDay('دوشنبه');
+      _days['سه‌شنبه'] = _getWorkoutDay('سه‌شنبه');
+      _days['چهارشنبه'] = _getWorkoutDay('چهارشنبه');
+      _days['پنج‌شنبه'] = _getWorkoutDay('پنج‌شنبه');
+      _days['جمعه'] = _getWorkoutDay('جمعه');
     });
   }
 
-  // به‌روزرسانی تمرینات در نقشه
-  void _refreshExercises() {
-    setState(() {
-      _loadAllExercises();
-    });
+  WorkoutDay _getWorkoutDay(String day) {
+    final savedExercises = PreferencesManager.getString(day) ?? '';
+    final savedCategories =
+        PreferencesManager.getString('${day}_categories') ?? '';
+    final categories = savedCategories.isNotEmpty
+        ? savedCategories.split(',').map((category) => category).toList()
+        : [];
+
+    return WorkoutDay(
+      dayName: day,
+      categories: exerciseCategories
+          .where((cat) => categories.contains(cat.name))
+          .toList(),
+      exercises: savedExercises.isNotEmpty
+          ? savedExercises.split(',').map((e) {
+              final parts = e.split('|');
+              return WorkoutExercise(
+                parts[0],
+                int.parse(parts[1]),
+                int.parse(parts[2]),
+                technique: parts.length > 3 ? parts[3] : null,
+                superSet: parts.length > 4 ? parts[4] : null,
+                superSetReps: parts.length > 5 ? int.parse(parts[5]) : null,
+                superSetTechnique: parts.length > 6 ? parts[6] : null,
+                triSet: parts.length > 7 ? parts[7] : null,
+                triSetReps: parts.length > 8 ? int.parse(parts[8]) : null,
+                triSetTechnique: parts.length > 9 ? parts[9] : null,
+              );
+            }).toList()
+          : [],
+      isRestDay: savedExercises.isEmpty && savedCategories.isEmpty,
+    );
   }
 
-  // ریست کردن تمامی تمرینات ذخیره‌شده
-  Future<void> _resetAllExercises() async {
-    await PreferencesManager.clear();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تمامی داده‌های تمرینات ریست شدند'),
-        backgroundColor: Colors.orange,
-        duration: Duration(seconds: 3),
+  Future<void> _navigateToDetailScreen(String day) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExerciseDetailScreen(day: day),
       ),
     );
-    _refreshExercises();
+
+    if (result != null && result.containsKey('categories')) {
+      setState(() {
+        _days[day]?.categories = exerciseCategories
+            .where((cat) => result['categories'].contains(cat.name))
+            .toList();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('برنامه تمرینات هفتگی'), // عنوان صفحه
+        title: const Text('برنامه تمرینات هفتگی'),
+        backgroundColor: Colors.blue,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _resetAllExercises, // ریست کردن تمامی تمرینات
-            tooltip: 'ریست کردن تمامی تمرینات',
+            onPressed: _loadAllDays,
+            tooltip: 'بارگذاری دوباره تمرینات',
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0), // فاصله داخلی لیست
-        children: [
-          ExerciseCard(day: 'شنبه', exercises: _exercises['شنبه'] ?? ''),
-          ExerciseCard(day: 'یکشنبه', exercises: _exercises['یکشنبه'] ?? ''),
-          ExerciseCard(day: 'دوشنبه', exercises: _exercises['دوشنبه'] ?? ''),
-          ExerciseCard(day: 'سه‌شنبه', exercises: _exercises['سه‌شنبه'] ?? ''),
-          ExerciseCard(
-              day: 'چهارشنبه', exercises: _exercises['چهارشنبه'] ?? ''),
-          ExerciseCard(
-              day: 'پنج‌شنبه', exercises: _exercises['پنج‌شنبه'] ?? ''),
-          ExerciseCard(day: 'جمعه', exercises: _exercises['جمعه'] ?? ''),
-        ],
+        padding: const EdgeInsets.all(16.0),
+        children: _days.entries.map((entry) {
+          final dayName = entry.key;
+          final workoutDay = entry.value;
+
+          return GestureDetector(
+            onTap: () => _navigateToDetailScreen(dayName),
+            child: DayCard(
+              day: workoutDay,
+              categories: exerciseCategories,
+              onCategoryAdded: (category) {
+                setState(() {
+                  _days[dayName]?.categories.add(category);
+                  PreferencesManager.setString(
+                      dayName,
+                      _days[dayName]
+                              ?.categories
+                              .map((cat) => cat.name)
+                              .join(',') ??
+                          '');
+                });
+              },
+              onCategoryRemoved: (category) {
+                setState(() {
+                  _days[dayName]?.categories.remove(category);
+                  PreferencesManager.setString(
+                      dayName,
+                      _days[dayName]
+                              ?.categories
+                              .map((cat) => cat.name)
+                              .join(',') ??
+                          '');
+                });
+              },
+              onRestDayChanged: (isRestDay) {
+                setState(() {
+                  _days[dayName]?.isRestDay = isRestDay;
+                  if (isRestDay) {
+                    _days[dayName]?.categories.clear();
+                    PreferencesManager.remove(dayName);
+                  }
+                });
+              },
+              onAddExercise: () {},
+            ),
+          );
+        }).toList(),
       ),
     );
   }

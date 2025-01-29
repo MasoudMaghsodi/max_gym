@@ -11,7 +11,8 @@ class ProfileForm extends StatefulWidget {
   _ProfileFormState createState() => _ProfileFormState();
 }
 
-class _ProfileFormState extends State<ProfileForm> {
+class _ProfileFormState extends State<ProfileForm>
+    with SingleTickerProviderStateMixin {
   // کلید فرم برای دسترسی به وضعیت فرم
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -22,10 +23,27 @@ class _ProfileFormState extends State<ProfileForm> {
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
-  final TextEditingController _shortTermGoalController =
-      TextEditingController();
-  final TextEditingController _longTermGoalController = TextEditingController();
+  final TextEditingController _goalController = TextEditingController();
   final TextEditingController _coachNotesController = TextEditingController();
+
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1));
+    _animation =
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
@@ -36,8 +54,7 @@ class _ProfileFormState extends State<ProfileForm> {
         'gender': _genderController.text,
         'height': _heightController.text,
         'weight': _weightController.text,
-        'shortTermGoal': _shortTermGoalController.text,
-        'longTermGoal': _longTermGoalController.text,
+        'goal': _goalController.text,
         'coachNotes': _coachNotesController.text,
       };
       widget.onProfileSubmit(profileData);
@@ -52,102 +69,182 @@ class _ProfileFormState extends State<ProfileForm> {
     _genderController.clear();
     _heightController.clear();
     _weightController.clear();
-    _shortTermGoalController.clear();
-    _longTermGoalController.clear();
+    _goalController.clear();
     _coachNotesController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _firstNameController,
-            decoration: InputDecoration(labelText: 'نام'),
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'این فیلد نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
+    return FadeTransition(
+      opacity: _animation,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            const Icon(Icons.person, size: 80, color: Colors.blue),
+            const SizedBox(height: 16),
+            const Text(
+              'اطلاعات شخصی',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const Divider(height: 32, color: Colors.blue),
+            _buildTextField(
+              controller: _firstNameController,
+              label: 'نام',
+              icon: Icons.account_circle,
+              iconColor: Colors.green,
+            ),
+            _buildTextField(
+              controller: _lastNameController,
+              label: 'نام خانوادگی',
+              icon: Icons.account_circle_outlined,
+              iconColor: Colors.orange,
+            ),
+            _buildTextField(
+              controller: _ageController,
+              label: 'سن',
+              icon: Icons.cake,
+              iconColor: Colors.purple,
+              keyboardType: TextInputType.number,
+            ),
+            _buildDropdownField(
+              controller: _genderController,
+              label: 'جنسیت',
+              items: ['مرد', 'زن'],
+              iconColor: Colors.pink,
+            ),
+            _buildTextField(
+              controller: _heightController,
+              label: 'قد (سانتی‌متر)',
+              icon: Icons.height,
+              iconColor: Colors.teal,
+              keyboardType: TextInputType.number,
+            ),
+            _buildTextField(
+              controller: _weightController,
+              label: 'وزن (کیلوگرم)',
+              icon: Icons.fitness_center,
+              iconColor: Colors.red,
+              keyboardType: TextInputType.number,
+            ),
+            const Divider(height: 32, color: Colors.blue),
+            const Text(
+              'اطلاعات هدف و مربی',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            _buildTextField(
+              controller: _goalController,
+              label: 'هدف',
+              icon: Icons.flag,
+              iconColor: Colors.indigo,
+            ),
+            _buildTextField(
+              controller: _coachNotesController,
+              label: 'یادداشت‌های مربی',
+              icon: Icons.note,
+              iconColor: Colors.brown,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('ثبت پروفایل'),
+                ),
+                ElevatedButton(
+                  onPressed: _resetForm,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('ریست فرم'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: iconColor),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-          TextFormField(
-            controller: _lastNameController,
-            decoration: InputDecoration(labelText: 'نام خانوادگی'),
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'این فیلد نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
+        ),
+        keyboardType: keyboardType,
+        validator: (value) {
+          if (value?.isEmpty ?? true) {
+            return 'این فیلد نمی‌تواند خالی باشد';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required TextEditingController controller,
+    required String label,
+    required List<String> items,
+    required Color iconColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        value: controller.text.isNotEmpty ? controller.text : null,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(Icons.transgender, color: iconColor),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-          TextFormField(
-            controller: _ageController,
-            decoration: InputDecoration(labelText: 'سن'),
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'این فیلد نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: _genderController,
-            decoration: InputDecoration(labelText: 'جنسیت'),
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'این فیلد نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: _heightController,
-            decoration: InputDecoration(labelText: 'قد (سانتی‌متر)'),
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'این فیلد نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: _weightController,
-            decoration: InputDecoration(labelText: 'وزن (کیلوگرم)'),
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'این فیلد نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: _shortTermGoalController,
-            decoration: InputDecoration(labelText: 'هدف کوتاه‌مدت'),
-          ),
-          TextFormField(
-            controller: _longTermGoalController,
-            decoration: InputDecoration(labelText: 'هدف بلند‌مدت'),
-          ),
-          TextFormField(
-            controller: _coachNotesController,
-            decoration: InputDecoration(labelText: 'یادداشت‌های مربی'),
-          ),
-          SizedBox(height: 16.0),
-          ElevatedButton(
-            onPressed: _submitForm,
-            child: Text('ثبت پروفایل'),
-          ),
-          ElevatedButton(
-            onPressed: _resetForm,
-            child: Text('ریست فرم'),
-          ),
-        ],
+        ),
+        items: items.map((item) {
+          return DropdownMenuItem(
+            value: item,
+            child: Text(item),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            controller.text = value ?? '';
+          });
+        },
+        validator: (value) {
+          if (value?.isEmpty ?? true) {
+            return 'این فیلد نمی‌تواند خالی باشد';
+          }
+          return null;
+        },
       ),
     );
   }

@@ -16,18 +16,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // کلید فرم پروفایل برای دسترسی به وضعیت فرم
   final GlobalKey<FormState> _profileFormKey = GlobalKey<FormState>();
 
-  // ریست کردن اطلاعات پروفایل
-  void _resetProfile() {
-    _profileFormKey.currentState?.reset();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('اطلاعات پروفایل ریست شدند'),
-        backgroundColor: Colors.orange,
-        duration: Duration(seconds: 3),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,35 +26,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Colors.white,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.refresh_rounded,
-              color: Colors.white,
-            ),
-            onPressed: _resetProfile, // فراخوانی تابع ریست پروفایل
-            tooltip: 'ریست کردن اطلاعات پروفایل',
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 12.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30.0), // تنظیم انحنای تصویر
+        backgroundColor: Colors.blue,
+      ),
+      body: Stack(
+        children: [
+          // پس‌زمینه با لوگوی باشگاه
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.07,
               child: Image.asset(
-                'assets/image/max.png',
-                fit: BoxFit.fill,
-                width: 40.0,
-                height: 40.0,
+                'assets/image/max.png', // مسیر لوگو
+                fit: BoxFit.cover,
               ),
             ),
           ),
+          // محتوای اصلی فرم
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: ProfileForm(
+              key: _profileFormKey,
+              onProfileSubmit: widget.onProfileSubmit, // ارسال اطلاعات پروفایل
+            ),
+          ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0), // فاصله داخلی اسکرول ویو
-        child: ProfileForm(
-          key: _profileFormKey,
-          onProfileSubmit: widget.onProfileSubmit, // ارسال اطلاعات پروفایل
-        ),
       ),
     );
   }

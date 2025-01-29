@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../models/workout_exercise.dart';
+import '../widgets/exerciseWidgets/exercise_row.dart';
 import '../../models/preferences_manager.dart';
-import '../widgets/exerciseWidgets/exercise_list_item.dart';
+import '../../models/exercise_data.dart';
+import '../../models/training_technique.dart';
 
 class ExerciseDetailScreen extends StatefulWidget {
-  // نام روز تمرین
   final String day;
 
   const ExerciseDetailScreen({super.key, required this.day});
@@ -14,15 +16,12 @@ class ExerciseDetailScreen extends StatefulWidget {
 }
 
 class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
-  // لیست تمرینات، سوپرست‌ها و تریست‌ها
-  final List<String> _exercises = [];
-  final List<String> _superSets = [];
-  final List<String> _triSets = [];
-
-  // کنترلرهای متنی برای افزودن تمرینات جدید
-  final TextEditingController _exerciseController = TextEditingController();
-  final TextEditingController _superSetController = TextEditingController();
-  final TextEditingController _triSetController = TextEditingController();
+  List<WorkoutExercise> _exercises = List.generate(
+    8,
+    (index) => WorkoutExercise('', 0, 0),
+  );
+  List<String> selectedCategories = [];
+  String? dropdownValue;
 
   @override
   void initState() {
@@ -30,193 +29,203 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     _loadExercises();
   }
 
-  // بارگذاری تمرینات ذخیره‌شده
   Future<void> _loadExercises() async {
     final savedExercises = PreferencesManager.getString(widget.day) ?? '';
-    final savedSuperSets =
-        PreferencesManager.getString('${widget.day}_superSets') ?? '';
-    final savedTriSets =
-        PreferencesManager.getString('${widget.day}_triSets') ?? '';
-
+    final savedCategories =
+        PreferencesManager.getString('${widget.day}_categories') ?? '';
     setState(() {
-      _exercises.addAll(savedExercises.split(',').where((e) => e.isNotEmpty));
-      _superSets.addAll(savedSuperSets.split(',').where((e) => e.isNotEmpty));
-      _triSets.addAll(savedTriSets.split(',').where((e) => e.isNotEmpty));
+      _exercises = savedExercises.split(',').map((e) {
+        final parts = e.split('|');
+        return WorkoutExercise(
+          parts[0],
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+          technique: parts.length > 3 ? parts[3] : null,
+          superSet: parts.length > 4 ? parts[4] : null,
+          superSetReps: parts.length > 5 ? int.parse(parts[5]) : null,
+          superSetTechnique: parts.length > 6 ? parts[6] : null,
+          triSet: parts.length > 7 ? parts[7] : null,
+          triSetReps: parts.length > 8 ? int.parse(parts[8]) : null,
+          triSetTechnique: parts.length > 9 ? parts[9] : null,
+        );
+      }).toList();
+
+      selectedCategories =
+          savedCategories.isNotEmpty ? savedCategories.split(',') : [];
     });
   }
 
-  // ذخیره تمرینات
   Future<void> _saveExercises() async {
-    await PreferencesManager.setString(widget.day, _exercises.join(','));
     await PreferencesManager.setString(
-        '${widget.day}_superSets', _superSets.join(','));
+      widget.day,
+      _exercises
+          .map((e) =>
+              '${e.name}|${e.sets}|${e.reps}|${e.technique ?? ''}|${e.superSet ?? ''}|${e.superSetReps ?? ''}|${e.superSetTechnique ?? ''}|${e.triSet ?? ''}|${e.triSetReps ?? ''}|${e.triSetTechnique ?? ''}')
+          .join(','),
+    );
+
     await PreferencesManager.setString(
-        '${widget.day}_triSets', _triSets.join(','));
+      '${widget.day}_categories',
+      selectedCategories.join(','),
+    );
   }
 
-  // افزودن تمرین جدید
-  void _addExercise(String exercise) {
+  void _updateExercise(int index, WorkoutExercise updatedExercise) {
     setState(() {
-      _exercises.add(exercise);
-      _exerciseController.clear();
+      _exercises[index] = updatedExercise;
     });
     _saveExercises();
   }
 
-  // حذف تمرین
-  void _removeExercise(String exercise) {
-    setState(() {
-      _exercises.remove(exercise);
-    });
-    _saveExercises();
-  }
-
-  // افزودن سوپرست جدید
-  void _addSuperSet(String superSet) {
-    setState(() {
-      _superSets.add(superSet);
-      _superSetController.clear();
-    });
-    _saveExercises();
-  }
-
-  // حذف سوپرست
-  void _removeSuperSet(String superSet) {
-    setState(() {
-      _superSets.remove(superSet);
-    });
-    _saveExercises();
-  }
-
-  // افزودن تریست جدید
-  void _addTriSet(String triSet) {
-    setState(() {
-      _triSets.add(triSet);
-      _triSetController.clear();
-    });
-    _saveExercises();
-  }
-
-  // حذف تریست
-  void _removeTriSet(String triSet) {
-    setState(() {
-      _triSets.remove(triSet);
-    });
-    _saveExercises();
-  }
-
-  // ریست کردن تمامی تمرینات
-  void _resetData() async {
-    setState(() {
-      _exercises.clear();
-      _superSets.clear();
-      _triSets.clear();
-    });
+  void _resetDay() async {
     await PreferencesManager.remove(widget.day);
-    await PreferencesManager.remove('${widget.day}_superSets');
-    await PreferencesManager.remove('${widget.day}_triSets');
+    await PreferencesManager.remove('${widget.day}_categories');
+    setState(() {
+      _exercises = List.generate(
+        8,
+        (index) => WorkoutExercise('', 0, 0),
+      );
+      selectedCategories = [];
+      dropdownValue = null;
+    });
+  }
+
+  List<String> _getExercisesForSelectedCategories() {
+    return exerciseCategories
+        .where((cat) => selectedCategories.contains(cat.name))
+        .expand((cat) => cat.exercises)
+        .toList();
+  }
+
+  void _saveAndGoBack() {
+    _saveExercises().then((_) {
+      // ignore: use_build_context_synchronously
+      Navigator.pop(context, {
+        'day': widget.day,
+        'categories': selectedCategories,
+      });
+    });
+  }
+
+  void _addExercise() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String newExerciseName = '';
+
+        return AlertDialog(
+          title: const Text('افزودن تمرین جدید'),
+          content: TextField(
+            decoration:
+                const InputDecoration(hintText: 'نام تمرین را وارد کنید'),
+            onChanged: (value) {
+              newExerciseName = value;
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('لغو'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _exercises.add(WorkoutExercise(newExerciseName, 3, 10));
+                  _saveExercises();
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('افزودن'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('تمرینات ${widget.day}'), // عنوان صفحه
+        title: Text('تمرینات ${widget.day}'),
+        backgroundColor: Colors.blue,
         actions: [
           IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: _saveAndGoBack,
+            tooltip: 'ذخیره و بازگشت',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _resetData, // ریست کردن تمامی تمرینات
+            onPressed: _resetDay,
             tooltip: 'ریست کردن تمامی تمرینات',
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _addExercise,
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _exerciseController,
-                decoration: InputDecoration(
-                  labelText: 'افزودن تمرین',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      if (_exerciseController.text.isNotEmpty) {
-                        _addExercise(_exerciseController.text);
-                      }
-                    },
-                  ),
-                ),
-              ),
+            DropdownButton<String>(
+              isExpanded: true,
+              hint: const Text("انتخاب کن"),
+              value: dropdownValue,
+              items: exerciseCategories
+                  .where(
+                      (category) => !selectedCategories.contains(category.name))
+                  .map((category) {
+                return DropdownMenuItem<String>(
+                  value: category.name,
+                  child: Text(category.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedCategories.add(value);
+                    dropdownValue = null; // بازگشت به حالت "انتخاب کن"
+                  });
+                  _saveExercises();
+                }
+              },
             ),
-            ExpansionTile(
-              title: const Text('تمرینات',
-                  style:
-                      TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
-              children: _exercises.map((exercise) {
-                return ExerciseListItem(
-                  exercise: exercise,
-                  onDelete: () => _removeExercise(exercise),
+            Wrap(
+              spacing: 8,
+              children: selectedCategories.map((cat) {
+                return Chip(
+                  label: Text(cat),
+                  onDeleted: () {
+                    setState(() {
+                      selectedCategories.remove(cat);
+                    });
+                    _saveExercises();
+                  },
                 );
               }).toList(),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _superSetController,
-                decoration: InputDecoration(
-                  labelText: 'افزودن سوپرست',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      if (_superSetController.text.isNotEmpty) {
-                        _addSuperSet(_superSetController.text);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
-            ExpansionTile(
-              title: const Text('سوپرست‌ها',
-                  style:
-                      TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
-              children: _superSets.map((superSet) {
-                return ExerciseListItem(
-                  exercise: superSet,
-                  onDelete: () => _removeSuperSet(superSet),
-                );
-              }).toList(),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _triSetController,
-                decoration: InputDecoration(
-                  labelText: 'افزودن تریست',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      if (_triSetController.text.isNotEmpty) {
-                        _addTriSet(_triSetController.text);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
-            ExpansionTile(
-              title: const Text('تریست‌ها',
-                  style:
-                      TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
-              children: _triSets.map((triSet) {
-                return ExerciseListItem(
-                  exercise: triSet,
-                  onDelete: () => _removeTriSet(triSet),
-                );
-              }).toList(),
-            ),
+            ..._exercises.asMap().entries.map((entry) {
+              final index = entry.key;
+              final exercise = entry.value;
+
+              return ExerciseRow(
+                exercise: exercise,
+                availableExercises: _getExercisesForSelectedCategories(),
+                availableTechniques: trainingTechniques
+                    .map((technique) => technique.name)
+                    .toList(),
+                onExerciseChanged: (updatedExercise) =>
+                    _updateExercise(index, updatedExercise),
+                index: index + 1,
+              );
+              // ignore: unnecessary_to_list_in_spreads
+            }).toList(),
           ],
         ),
       ),
