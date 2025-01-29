@@ -26,13 +26,17 @@ class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
   Future<void> _loadAllDays() async {
     await PreferencesManager.init();
     setState(() {
-      _days['شنبه'] = _getWorkoutDay('شنبه');
-      _days['یکشنبه'] = _getWorkoutDay('یکشنبه');
-      _days['دوشنبه'] = _getWorkoutDay('دوشنبه');
-      _days['سه‌شنبه'] = _getWorkoutDay('سه‌شنبه');
-      _days['چهارشنبه'] = _getWorkoutDay('چهارشنبه');
-      _days['پنج‌شنبه'] = _getWorkoutDay('پنج‌شنبه');
-      _days['جمعه'] = _getWorkoutDay('جمعه');
+      for (var day in [
+        'شنبه',
+        'یکشنبه',
+        'دوشنبه',
+        'سه‌شنبه',
+        'چهارشنبه',
+        'پنج‌شنبه',
+        'جمعه'
+      ]) {
+        _days[day] = _getWorkoutDay(day);
+      }
     });
   }
 
@@ -40,9 +44,8 @@ class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
     final savedExercises = PreferencesManager.getString(day) ?? '';
     final savedCategories =
         PreferencesManager.getString('${day}_categories') ?? '';
-    final categories = savedCategories.isNotEmpty
-        ? savedCategories.split(',').map((category) => category).toList()
-        : [];
+    final categories =
+        savedCategories.isNotEmpty ? savedCategories.split(',').toList() : [];
 
     return WorkoutDay(
       dayName: day,
@@ -54,14 +57,14 @@ class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
               final parts = e.split('|');
               return WorkoutExercise(
                 parts[0],
-                int.parse(parts[1]),
-                int.parse(parts[2]),
+                int.tryParse(parts[1]) ?? 0,
+                int.tryParse(parts[2]) ?? 0,
                 technique: parts.length > 3 ? parts[3] : null,
                 superSet: parts.length > 4 ? parts[4] : null,
-                superSetReps: parts.length > 5 ? int.parse(parts[5]) : null,
+                superSetReps: parts.length > 5 ? int.tryParse(parts[5]) : null,
                 superSetTechnique: parts.length > 6 ? parts[6] : null,
                 triSet: parts.length > 7 ? parts[7] : null,
-                triSetReps: parts.length > 8 ? int.parse(parts[8]) : null,
+                triSetReps: parts.length > 8 ? int.tryParse(parts[8]) : null,
                 triSetTechnique: parts.length > 9 ? parts[9] : null,
               );
             }).toList()

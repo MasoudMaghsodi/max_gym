@@ -21,7 +21,6 @@ class ExerciseRow extends StatefulWidget {
   });
 
   @override
-  // ignore: library_private_types_in_public_api
   _ExerciseRowState createState() => _ExerciseRowState();
 }
 
@@ -72,6 +71,10 @@ class _ExerciseRowState extends State<ExerciseRow> {
     isTriSetEnabled = superSetExercise != null;
   }
 
+  void _updateExercise() {
+    widget.onExerciseChanged(widget.exercise);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -96,8 +99,8 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   setState(() {
                     selectedExercise = value;
                     widget.exercise.name = value!;
-                    widget.onExerciseChanged(widget.exercise);
                     isSuperSetEnabled = true;
+                    _updateExercise();
                   });
                 },
               ),
@@ -109,7 +112,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                   setState(() {
                     selectedTechnique = value;
                     widget.exercise.technique = value!;
-                    widget.onExerciseChanged(widget.exercise);
+                    _updateExercise();
                   });
                 },
               ),
@@ -126,7 +129,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                           setState(() {
                             selectedSets = value;
                             widget.exercise.sets = value!;
-                            widget.onExerciseChanged(widget.exercise);
+                            _updateExercise();
                           });
                         },
                       ),
@@ -142,7 +145,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                           setState(() {
                             selectedReps = value;
                             widget.exercise.reps = value!;
-                            widget.onExerciseChanged(widget.exercise);
+                            _updateExercise();
                           });
                         },
                       ),
@@ -161,7 +164,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                         setState(() {
                           selectedSets = value;
                           widget.exercise.sets = value!;
-                          widget.onExerciseChanged(widget.exercise);
+                          _updateExercise();
                         });
                       },
                     ),
@@ -175,7 +178,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                         setState(() {
                           selectedReps = value;
                           widget.exercise.reps = value!;
-                          widget.onExerciseChanged(widget.exercise);
+                          _updateExercise();
                         });
                       },
                     ),
@@ -184,7 +187,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
               if (isSuperSetEnabled) ...[
                 const Divider(thickness: 1.5),
                 ListTile(
-                  title: Text('سوپرست'),
+                  title: const Text('سوپرست'),
                   trailing: Icon(
                     isSuperSetEnabled ? Icons.expand_less : Icons.expand_more,
                   ),
@@ -203,8 +206,8 @@ class _ExerciseRowState extends State<ExerciseRow> {
                       setState(() {
                         superSetExercise = value;
                         widget.exercise.superSet = value;
-                        widget.onExerciseChanged(widget.exercise);
                         isTriSetEnabled = true;
+                        _updateExercise();
                       });
                     },
                   ),
@@ -216,7 +219,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                       setState(() {
                         superSetTechnique = value;
                         widget.exercise.superSetTechnique = value!;
-                        widget.onExerciseChanged(widget.exercise);
+                        _updateExercise();
                       });
                     },
                   ),
@@ -233,7 +236,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                               setState(() {
                                 superSetSets = value;
                                 widget.exercise.superSetSets = value!;
-                                widget.onExerciseChanged(widget.exercise);
+                                _updateExercise();
                               });
                             },
                           ),
@@ -249,7 +252,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                               setState(() {
                                 superSetReps = value;
                                 widget.exercise.superSetReps = value!;
-                                widget.onExerciseChanged(widget.exercise);
+                                _updateExercise();
                               });
                             },
                           ),
@@ -268,7 +271,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             setState(() {
                               superSetSets = value;
                               widget.exercise.superSetSets = value!;
-                              widget.onExerciseChanged(widget.exercise);
+                              _updateExercise();
                             });
                           },
                         ),
@@ -282,7 +285,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             setState(() {
                               superSetReps = value;
                               widget.exercise.superSetReps = value!;
-                              widget.onExerciseChanged(widget.exercise);
+                              _updateExercise();
                             });
                           },
                         ),
@@ -293,7 +296,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
               if (isTriSetEnabled) ...[
                 const Divider(thickness: 1.5),
                 ListTile(
-                  title: Text('تریست'),
+                  title: const Text('تریست'),
                   trailing: Icon(
                     isTriSetEnabled ? Icons.expand_less : Icons.expand_more,
                   ),
@@ -312,7 +315,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                       setState(() {
                         triSetExercise = value;
                         widget.exercise.triSet = value;
-                        widget.onExerciseChanged(widget.exercise);
+                        _updateExercise();
                       });
                     },
                   ),
@@ -324,7 +327,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                       setState(() {
                         triSetTechnique = value;
                         widget.exercise.triSetTechnique = value!;
-                        widget.onExerciseChanged(widget.exercise);
+                        _updateExercise();
                       });
                     },
                   ),
@@ -341,7 +344,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                               setState(() {
                                 triSetSets = value;
                                 widget.exercise.triSetSets = value!;
-                                widget.onExerciseChanged(widget.exercise);
+                                _updateExercise();
                               });
                             },
                           ),
@@ -357,7 +360,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                               setState(() {
                                 triSetReps = value;
                                 widget.exercise.triSetReps = value!;
-                                widget.onExerciseChanged(widget.exercise);
+                                _updateExercise();
                               });
                             },
                           ),
@@ -376,7 +379,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             setState(() {
                               triSetSets = value;
                               widget.exercise.triSetSets = value!;
-                              widget.onExerciseChanged(widget.exercise);
+                              _updateExercise();
                             });
                           },
                         ),
@@ -390,7 +393,7 @@ class _ExerciseRowState extends State<ExerciseRow> {
                             setState(() {
                               triSetReps = value;
                               widget.exercise.triSetReps = value!;
-                              widget.onExerciseChanged(widget.exercise);
+                              _updateExercise();
                             });
                           },
                         ),

@@ -11,11 +11,10 @@ class ExerciseDetailScreen extends StatefulWidget {
   const ExerciseDetailScreen({super.key, required this.day});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _ExerciseDetailScreenState createState() => _ExerciseDetailScreenState();
+  ExerciseDetailScreenState createState() => ExerciseDetailScreenState();
 }
 
-class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
+class ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   List<WorkoutExercise> _exercises = List.generate(
     8,
     (index) => WorkoutExercise('', 0, 0),
@@ -26,7 +25,15 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadExercises();
+    _initializePreferences();
+  }
+
+  void _initializePreferences() {
+    PreferencesManager.init().then((_) => _loadExercises());
+  }
+
+  int safeParse(String value) {
+    return int.tryParse(value) ?? 0;
   }
 
   Future<void> _loadExercises() async {
@@ -34,21 +41,23 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     final savedCategories =
         PreferencesManager.getString('${widget.day}_categories') ?? '';
     setState(() {
-      _exercises = savedExercises.split(',').map((e) {
-        final parts = e.split('|');
-        return WorkoutExercise(
-          parts[0],
-          int.parse(parts[1]),
-          int.parse(parts[2]),
-          technique: parts.length > 3 ? parts[3] : null,
-          superSet: parts.length > 4 ? parts[4] : null,
-          superSetReps: parts.length > 5 ? int.parse(parts[5]) : null,
-          superSetTechnique: parts.length > 6 ? parts[6] : null,
-          triSet: parts.length > 7 ? parts[7] : null,
-          triSetReps: parts.length > 8 ? int.parse(parts[8]) : null,
-          triSetTechnique: parts.length > 9 ? parts[9] : null,
-        );
-      }).toList();
+      _exercises = savedExercises.isNotEmpty
+          ? savedExercises.split(',').map((e) {
+              final parts = e.split('|');
+              return WorkoutExercise(
+                parts[0],
+                safeParse(parts[1]),
+                safeParse(parts[2]),
+                technique: parts.length > 3 ? parts[3] : null,
+                superSet: parts.length > 4 ? parts[4] : null,
+                superSetReps: parts.length > 5 ? safeParse(parts[5]) : null,
+                superSetTechnique: parts.length > 6 ? parts[6] : null,
+                triSet: parts.length > 7 ? parts[7] : null,
+                triSetReps: parts.length > 8 ? safeParse(parts[8]) : null,
+                triSetTechnique: parts.length > 9 ? parts[9] : null,
+              );
+            }).toList()
+          : List.generate(8, (index) => WorkoutExercise('', 0, 0));
 
       selectedCategories =
           savedCategories.isNotEmpty ? savedCategories.split(',') : [];
@@ -81,10 +90,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     await PreferencesManager.remove(widget.day);
     await PreferencesManager.remove('${widget.day}_categories');
     setState(() {
-      _exercises = List.generate(
-        8,
-        (index) => WorkoutExercise('', 0, 0),
-      );
+      _exercises = List.generate(8, (index) => WorkoutExercise('', 0, 0));
       selectedCategories = [];
       dropdownValue = null;
     });
@@ -97,54 +103,6 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         .toList();
   }
 
-  void _saveAndGoBack() {
-    _saveExercises().then((_) {
-      // ignore: use_build_context_synchronously
-      Navigator.pop(context, {
-        'day': widget.day,
-        'categories': selectedCategories,
-      });
-    });
-  }
-
-  void _addExercise() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        String newExerciseName = '';
-
-        return AlertDialog(
-          title: const Text('افزودن تمرین جدید'),
-          content: TextField(
-            decoration:
-                const InputDecoration(hintText: 'نام تمرین را وارد کنید'),
-            onChanged: (value) {
-              newExerciseName = value;
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('لغو'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _exercises.add(WorkoutExercise(newExerciseName, 3, 10));
-                  _saveExercises();
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('افزودن'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,18 +111,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         backgroundColor: Colors.blue,
         actions: [
           IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _saveAndGoBack,
-            tooltip: 'ذخیره و بازگشت',
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _resetDay,
             tooltip: 'ریست کردن تمامی تمرینات',
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addExercise,
           ),
         ],
       ),
@@ -176,7 +125,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             DropdownButton<String>(
               isExpanded: true,
               hint: const Text("انتخاب کن"),
-              value: dropdownValue,
+              value: exerciseCategories
+                      .any((category) => category.name == dropdownValue)
+                  ? dropdownValue
+                  : null,
               items: exerciseCategories
                   .where(
                       (category) => !selectedCategories.contains(category.name))
@@ -190,7 +142,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 if (value != null) {
                   setState(() {
                     selectedCategories.add(value);
-                    dropdownValue = null; // بازگشت به حالت "انتخاب کن"
+                    dropdownValue = null;
                   });
                   _saveExercises();
                 }
