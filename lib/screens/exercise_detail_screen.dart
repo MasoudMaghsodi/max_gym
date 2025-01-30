@@ -11,7 +11,6 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
   const ExerciseDetailScreen({super.key, required this.day});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ExerciseDetailScreenState createState() => _ExerciseDetailScreenState();
 }
 
@@ -29,7 +28,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     final workoutDay =
         ref.read(workoutProvider.notifier).getWorkoutDay(widget.day);
     setState(() {
-      _exercises = workoutDay?.exercises ?? [];
+      _exercises = workoutDay.getExercisesList();
     });
   }
 
@@ -44,10 +43,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // استخراج نام تمرین‌ها به صورت لیست از رشته‌ها
     final availableExercises = ref
         .watch(workoutProvider)
-        .expand((day) => day.exercises.map((exercise) => exercise.name))
+        .expand(
+            (day) => day.getExercisesList().map((exercise) => exercise.name))
         .toList();
 
     final availableTechniques =

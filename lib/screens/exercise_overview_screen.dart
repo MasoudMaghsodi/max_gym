@@ -50,7 +50,7 @@ class _ExerciseOverviewScreenState
 
     if (result != null && result.containsKey('categories')) {
       setState(() {
-        _days[day]?.categories = result['categories'];
+        _days[day]?.categoriesList = result['categories'];
       });
     }
   }
@@ -79,15 +79,19 @@ class _ExerciseOverviewScreenState
             onTap: () => _navigateToDetailScreen(dayName),
             child: DayCard(
               day: workoutDay,
-              categories: workoutDay.categories,
+              categories: workoutDay.categoriesList,
               onCategoryAdded: (category) {
                 setState(() {
-                  _days[dayName]?.categories.add(category);
+                  final updatedCategories = workoutDay.categoriesList;
+                  updatedCategories.add(category);
+                  _days[dayName]?.categoriesList = updatedCategories;
                 });
               },
               onCategoryRemoved: (category) {
                 setState(() {
-                  _days[dayName]?.categories.remove(category);
+                  final updatedCategories = workoutDay.categoriesList;
+                  updatedCategories.remove(category);
+                  _days[dayName]?.categoriesList = updatedCategories;
                 });
               },
               onRestDayChanged: (isRestDay) {

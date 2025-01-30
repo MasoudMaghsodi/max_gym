@@ -1,9 +1,25 @@
-class ExerciseCategory {
-  // نام دسته‌بندی تمرینات
-  final String name;
-  // لیست تمرینات موجود در دسته‌بندی
-  final List<String> exercises;
+import 'package:isar/isar.dart';
 
-  // سازنده کلاس برای مقداردهی اولیه دسته‌بندی تمرینات
-  ExerciseCategory(this.name, this.exercises);
+part 'exercise_category.g.dart';
+
+@Collection()
+class ExerciseCategory {
+  Id id = Isar.autoIncrement;
+  late String name;
+  late String exercisesSerialized;
+
+  @ignore
+  late List<String> exercises;
+
+  ExerciseCategory(this.name, String exercisesSerialized) {
+    this.exercisesSerialized = exercisesSerialized;
+    this.exercises = exercisesSerialized.split(',');
+  }
+
+  List<String> get exercisesList => exercisesSerialized.split(',');
+
+  set exercisesList(List<String> value) {
+    exercisesSerialized = value.join(',');
+    exercises = value;
+  }
 }

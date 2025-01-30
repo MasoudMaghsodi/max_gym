@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/workout_day.dart';
-import '../widgets/exerciseWidgets/exercise_card.dart';
+import '../widgets/day_card.dart';
 import '../providers/workout_provider.dart';
+import 'exercise_detail_screen.dart';
 
 class WorkoutPlannerScreen extends ConsumerWidget {
   final Map<String, String> profileData;
@@ -38,14 +39,39 @@ class WorkoutPlannerScreen extends ConsumerWidget {
               opacity: 0.07,
               child: Image.asset(
                 'assets/image/max.png',
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
               ),
             ),
           ),
           ListView(
             padding: const EdgeInsets.all(16.0),
             children: workoutDays.map((day) {
-              return ExerciseCard(day: day, profileData: profileData);
+              return DayCard(
+                day: day,
+                categories: day.categoriesList,
+                onCategoryAdded: (category) {
+                  final updatedCategories = day.categoriesList;
+                  updatedCategories.add(category);
+                  day.categoriesList = updatedCategories;
+                },
+                onCategoryRemoved: (category) {
+                  final updatedCategories = day.categoriesList;
+                  updatedCategories.remove(category);
+                  day.categoriesList = updatedCategories;
+                },
+                onRestDayChanged: (isRestDay) {
+                  day.isRestDay = isRestDay;
+                },
+                onAddExercise: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ExerciseDetailScreen(day: day.dayName),
+                    ),
+                  );
+                },
+              );
             }).toList(),
           ),
         ],

@@ -8,10 +8,9 @@ class DayCard extends StatelessWidget {
   final Function(ExerciseCategory) onCategoryAdded;
   final Function(ExerciseCategory) onCategoryRemoved;
   final Function(bool) onRestDayChanged;
-  final VoidCallback onAddExercise;
+  final Function() onAddExercise;
 
   const DayCard({
-    super.key,
     required this.day,
     required this.categories,
     required this.onCategoryAdded,
@@ -30,31 +29,42 @@ class DayCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // عنوان روز هفته
             Text(
               day.dayName,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 10),
-            SwitchListTile(
-              title: const Text('روز استراحت'),
-              value: day.isRestDay,
-              onChanged: onRestDayChanged,
+            const SizedBox(height: 8.0),
+
+            // متن حرکات (دسته‌بندی‌ها)
+            Text(
+              categories.map((e) => e.name).join(', '),
+              style: const TextStyle(
+                fontSize: 16.0,
+              ),
             ),
-            const SizedBox(height: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: categories.map((category) {
-                return ListTile(
-                  title: Text(category.name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: () => onCategoryRemoved(category),
-                  ),
-                );
-              }).toList(),
+            const SizedBox(height: 16.0),
+
+            // دکمه روز تمرین/روز تعطیل
+            Row(
+              children: [
+                Text(day.isRestDay ? 'روز تعطیل' : 'روز تمرین'),
+                const SizedBox(width: 8.0),
+                Switch(
+                  value: !day.isRestDay,
+                  onChanged: (value) {
+                    onRestDayChanged(!value);
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
+            const SizedBox(height: 8.0),
+
+            // دکمه افزودن تمرین
+            TextButton(
               onPressed: onAddExercise,
               child: const Text('افزودن تمرین'),
             ),

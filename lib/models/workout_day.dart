@@ -1,36 +1,55 @@
-import 'workout_exercise.dart';
+import 'package:isar/isar.dart';
 import 'exercise_category.dart';
+import 'workout_exercise.dart';
 
+part 'workout_day.g.dart';
+
+@Collection()
 class WorkoutDay {
-  // نام روز تمرین
-  String dayName;
-  // لیست دسته‌بندی‌های تمرینات
-  List<ExerciseCategory> categories;
-  // لیست تمرینات
-  List<WorkoutExercise> exercises;
-  // وضعیت روز استراحت
-  bool isRestDay;
+  Id id = Isar.autoIncrement;
+  late String dayName;
+  late bool isRestDay;
+  final exercises = IsarLinks<WorkoutExercise>();
 
-  // سازنده کلاس برای مقداردهی اولیه روز تمرین
+  late String categoriesSerialized;
+
   WorkoutDay({
     required this.dayName,
-    required this.categories,
-    required this.exercises,
-    this.isRestDay = false,
-  });
+    required this.isRestDay,
+    List<ExerciseCategory> categories = const [],
+  }) : categoriesSerialized = categories.map((e) => e.name).join(',');
 
-  // تابع copyWith برای کپی کردن و به‌روزرسانی خصوصیات
+  @ignore
+  List<ExerciseCategory> get categoriesList => categoriesSerialized
+      .split(',')
+      .map((e) => ExerciseCategory(e, ''))
+      .toList();
+
+  set categoriesList(List<ExerciseCategory> value) {
+    categoriesSerialized = value.map((e) => e.name).join(',');
+  }
+
+  List<WorkoutExercise> getExercisesList() {
+    return exercises.toList();
+  }
+
+  void setExercisesList(List<WorkoutExercise> value) {
+    exercises.clear();
+    exercises.addAll(value);
+  }
+
   WorkoutDay copyWith({
     String? dayName,
     List<ExerciseCategory>? categories,
-    List<WorkoutExercise>? exercises,
     bool? isRestDay,
+    List<WorkoutExercise>? exercises,
   }) {
-    return WorkoutDay(
+    final updatedWorkoutDay = WorkoutDay(
       dayName: dayName ?? this.dayName,
-      categories: categories ?? this.categories,
-      exercises: exercises ?? this.exercises,
       isRestDay: isRestDay ?? this.isRestDay,
+      categories: categories ?? categoriesList,
     );
+    updatedWorkoutDay.setExercisesList(exercises ?? getExercisesList());
+    return updatedWorkoutDay;
   }
 }

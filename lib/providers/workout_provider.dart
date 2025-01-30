@@ -32,23 +32,20 @@ class WorkoutNotifier extends StateNotifier<List<WorkoutDay>> {
     ];
   }
 
-  // تابع برای دریافت تمرین روز مشخص شده
   WorkoutDay getWorkoutDay(String dayName) {
     return state.firstWhere(
       (workout) => workout.dayName == dayName,
       orElse: () => WorkoutDay(
         dayName: dayName,
         categories: [],
-        exercises: [],
         isRestDay: false,
       ),
     );
   }
 
-  // تابع برای به‌روزرسانی تمرین روز مشخص شده
   void updateWorkoutExercise(String dayName, List<WorkoutExercise> exercises) {
     final workoutDay = getWorkoutDay(dayName);
-    final updatedWorkoutDay = workoutDay.copyWith(exercises: exercises);
-    updateWorkout(updatedWorkoutDay);
+    workoutDay.setExercisesList(exercises);
+    updateWorkout(workoutDay);
   }
 }
