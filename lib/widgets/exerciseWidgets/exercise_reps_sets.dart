@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-import 'exercise_dropdown.dart';
 
 class ExerciseRepsSets extends StatelessWidget {
-  // توضیح فیلد کشویی
   final String hint;
-  // مقدار اولیه فیلد کشویی
   final int? value;
-  // تعداد گزینه‌ها در فیلد کشویی
   final int count;
-  // افزایش گزینه‌ها در فیلد کشویی
   final int increment;
-  // تابعی که مقدار انتخاب شده را ذخیره می‌کند
-  final void Function(int?) onChanged;
+  final ValueChanged<int?> onChanged;
 
   const ExerciseRepsSets({
     super.key,
@@ -24,12 +18,21 @@ class ExerciseRepsSets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExerciseDropdown<int>(
+    return DropdownButtonFormField<int>(
       value: value,
-      hint: hint, // تنظیم توضیح فیلد کشویی
-      items: List.generate(
-          count, (i) => (i + 1) * increment), // تولید لیست گزینه‌ها
-      onChanged: onChanged, // ذخیره مقدار انتخاب شده
+      hint: Text(hint),
+      items: List.generate(count, (index) {
+        final itemValue = (index + 1) * increment;
+        return DropdownMenuItem<int>(
+          value: itemValue,
+          child: Text('$itemValue'),
+        );
+      }).toList(),
+      onChanged: onChanged,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
     );
   }
 }

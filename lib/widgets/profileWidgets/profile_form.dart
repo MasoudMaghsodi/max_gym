@@ -1,250 +1,201 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProfileForm extends StatefulWidget {
-  // تابعی برای ارسال اطلاعات پروفایل
-  final Function(Map<String, String>) onProfileSubmit;
-
-  const ProfileForm({super.key, required this.onProfileSubmit});
+class ProfileForm extends ConsumerStatefulWidget {
+  const ProfileForm({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _ProfileFormState createState() => _ProfileFormState();
+  ProfileFormState createState() => ProfileFormState();
 }
 
-class _ProfileFormState extends State<ProfileForm>
-    with SingleTickerProviderStateMixin {
-  // کلید فرم برای دسترسی به وضعیت فرم
+class ProfileFormState extends ConsumerState<ProfileForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // کنترلرهای متنی برای فیلدهای فرم
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _genderController = TextEditingController();
-  final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
   final TextEditingController _goalController = TextEditingController();
   final TextEditingController _coachNotesController = TextEditingController();
 
-  late AnimationController _animationController;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 1));
-    _animation =
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
-    _animationController.forward();
-  }
+  String? _selectedGender; // پیش‌فرض جنسیت خالی است
 
   @override
   void dispose() {
-    _animationController.dispose();
+    // حتماً کنترلرها را در dispose پاکسازی کنید
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    _goalController.dispose();
+    _coachNotesController.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState?.validate() ?? false) {
-      final profileData = {
-        'firstName': _firstNameController.text,
-        'lastName': _lastNameController.text,
-        'age': _ageController.text,
-        'gender': _genderController.text,
-        'height': _heightController.text,
-        'weight': _weightController.text,
-        'goal': _goalController.text,
-        'coachNotes': _coachNotesController.text,
-      };
-      widget.onProfileSubmit(profileData);
-    }
-  }
-
-  void _resetForm() {
+  void resetForm() {
     _formKey.currentState?.reset();
     _firstNameController.clear();
     _lastNameController.clear();
     _ageController.clear();
-    _genderController.clear();
-    _heightController.clear();
     _weightController.clear();
+    _heightController.clear();
     _goalController.clear();
     _coachNotesController.clear();
+    setState(() {
+      _selectedGender = null; // ریست جنسیت
+    });
+  }
+
+  bool validateForm() {
+    return _formKey.currentState?.validate() ?? false;
+  }
+
+  Map<String, String> collectFormData() {
+    return {
+      'firstName': _firstNameController.text,
+      'lastName': _lastNameController.text,
+      'age': _ageController.text,
+      'weight': _weightController.text,
+      'height': _heightController.text,
+      'gender': _selectedGender ?? '',
+      'goal': _goalController.text,
+      'coachNotes': _coachNotesController.text,
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _animation,
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            const Icon(Icons.person, size: 80, color: Colors.blue),
-            const SizedBox(height: 16),
-            const Text(
-              'اطلاعات شخصی',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const Divider(height: 32, color: Colors.blue),
-            _buildTextField(
-              controller: _firstNameController,
-              label: 'نام',
-              icon: Icons.account_circle,
-              iconColor: Colors.green,
-            ),
-            _buildTextField(
-              controller: _lastNameController,
-              label: 'نام خانوادگی',
-              icon: Icons.account_circle_outlined,
-              iconColor: Colors.orange,
-            ),
-            _buildTextField(
-              controller: _ageController,
-              label: 'سن',
-              icon: Icons.cake,
-              iconColor: Colors.purple,
-              keyboardType: TextInputType.number,
-            ),
-            _buildDropdownField(
-              controller: _genderController,
-              label: 'جنسیت',
-              items: ['مرد', 'زن'],
-              iconColor: Colors.pink,
-            ),
-            _buildTextField(
-              controller: _heightController,
-              label: 'قد (سانتی‌متر)',
-              icon: Icons.height,
-              iconColor: Colors.teal,
-              keyboardType: TextInputType.number,
-            ),
-            _buildTextField(
-              controller: _weightController,
-              label: 'وزن (کیلوگرم)',
-              icon: Icons.fitness_center,
-              iconColor: Colors.red,
-              keyboardType: TextInputType.number,
-            ),
-            const Divider(height: 32, color: Colors.blue),
-            const Text(
-              'اطلاعات هدف و مربی',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            _buildTextField(
-              controller: _goalController,
-              label: 'هدف',
-              icon: Icons.flag,
-              iconColor: Colors.indigo,
-            ),
-            _buildTextField(
-              controller: _coachNotesController,
-              label: 'یادداشت‌های مربی',
-              icon: Icons.note,
-              iconColor: Colors.brown,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text('ثبت پروفایل'),
-                ),
-                ElevatedButton(
-                  onPressed: _resetForm,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text('ریست فرم'),
-                ),
-              ],
-            ),
-          ],
-        ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          _buildPersianTextField(_firstNameController, 'نام', Icons.person,
+              color: Colors.indigo, required: true),
+          const SizedBox(height: 16),
+          _buildPersianTextField(
+              _lastNameController, 'نام خانوادگی', Icons.person_outline,
+              color: Colors.indigo, required: true),
+          const SizedBox(height: 16),
+          _buildNumberField(_ageController, 'سن', Icons.cake,
+              color: Colors.green, required: true),
+          const SizedBox(height: 16),
+          _buildNumberField(_weightController, 'وزن', Icons.scale,
+              color: Colors.red, required: true),
+          const SizedBox(height: 16),
+          _buildNumberField(_heightController, 'قد', Icons.height,
+              color: Colors.orange, required: true),
+          const SizedBox(height: 16),
+          _buildDropdownField('جنسیت', Icons.wc,
+              color: Colors.purple, required: true),
+          const SizedBox(height: 16),
+          _buildPersianTextField(_goalController, 'هدف', Icons.flag,
+              color: Colors.teal, maxLines: 1),
+          const SizedBox(height: 16),
+          _buildPersianTextField(_coachNotesController, 'نظر مربی', Icons.note,
+              color: Colors.yellow, maxLines: 4),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required Color iconColor,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: iconColor),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+  Widget _buildPersianTextField(
+      TextEditingController controller, String label, IconData icon,
+      {Color color = Colors.black, int maxLines = 1, bool required = false}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        keyboardType: keyboardType,
-        validator: (value) {
-          if (value?.isEmpty ?? true) {
-            return 'این فیلد نمی‌تواند خالی باشد';
-          }
-          return null;
-        },
+        prefixIcon: Icon(icon, color: color),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.8),
       ),
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.allow(RegExp(r'[ا-ی\s]')),
+      ],
+      keyboardType: TextInputType.multiline,
+      maxLines: maxLines,
+      validator: required
+          ? (value) {
+              if (value == null || value.isEmpty) {
+                return 'لطفاً $label خود را وارد کنید';
+              }
+              if (!RegExp(r'^[ا-ی\s]+$').hasMatch(value)) {
+                return 'لطفاً فقط حروف فارسی وارد کنید';
+              }
+              return null;
+            }
+          : null,
     );
   }
 
-  Widget _buildDropdownField({
-    required TextEditingController controller,
-    required String label,
-    required List<String> items,
-    required Color iconColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButtonFormField<String>(
-        value: controller.text.isNotEmpty ? controller.text : null,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(Icons.transgender, color: iconColor),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+  Widget _buildNumberField(
+      TextEditingController controller, String label, IconData icon,
+      {Color color = Colors.black, bool required = false}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        items: items.map((item) {
-          return DropdownMenuItem(
-            value: item,
-            child: Text(item),
-          );
-        }).toList(),
-        onChanged: (value) {
-          setState(() {
-            controller.text = value ?? '';
-          });
-        },
-        validator: (value) {
-          if (value?.isEmpty ?? true) {
-            return 'این فیلد نمی‌تواند خالی باشد';
-          }
-          return null;
-        },
+        prefixIcon: Icon(icon, color: color),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.8),
+      ),
+      keyboardType: TextInputType.number,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+      validator: required
+          ? (value) {
+              if (value == null || value.isEmpty) {
+                return 'لطفاً $label خود را وارد کنید';
+              }
+              if (!RegExp(r'^\d+$').hasMatch(value)) {
+                return 'لطفاً فقط عدد وارد کنید';
+              }
+              return null;
+            }
+          : null,
+    );
+  }
+
+  Widget _buildDropdownField(String label, IconData icon,
+      {Color color = Colors.black, bool required = false}) {
+    return InputDecorator(
+      decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        prefixIcon: Icon(icon, color: color),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedGender,
+          hint: Text('جنسیت'),
+          isDense: true,
+          onChanged: (newValue) {
+            setState(() {
+              _selectedGender = newValue;
+            });
+          },
+          items: ['مرد', 'زن'].map((value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

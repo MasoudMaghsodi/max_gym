@@ -1,31 +1,63 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesManager {
-  // متغیری برای نگهداری شیء SharedPreferences
-  static SharedPreferences? _preferences;
-
-  // مقداردهی اولیه شیء SharedPreferences
-  static Future<void> init() async {
-    _preferences = await SharedPreferences.getInstance();
+  static Future<void> saveString(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
   }
 
-  // ذخیره رشته‌ای در SharedPreferences
-  static Future<void> setString(String key, String value) async {
-    await _preferences?.setString(key, value);
+  static Future<String?> getString(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
   }
 
-  // دریافت رشته‌ای از SharedPreferences
-  static String? getString(String key) {
-    return _preferences?.getString(key);
+  static Future<void> saveInt(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, value);
   }
 
-  // حذف رشته‌ای از SharedPreferences
+  static Future<int?> getInt(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(key);
+  }
+
+  static Future<void> saveBool(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
+  static Future<bool?> getBool(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(key);
+  }
+
+  static Future<void> saveDouble(String key, double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(key, value);
+  }
+
+  static Future<double?> getDouble(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(key);
+  }
+
+  static Future<void> saveStringList(String key, List<String> value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(key, value);
+  }
+
+  static Future<List<String>?> getStringList(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(key);
+  }
+
   static Future<void> remove(String key) async {
-    await _preferences?.remove(key);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
   }
 
-  // پاکسازی تمامی داده‌ها از SharedPreferences
   static Future<void> clear() async {
-    await _preferences?.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }

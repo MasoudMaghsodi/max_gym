@@ -42,12 +42,19 @@ dependencies:
   printing: ^5.14.0
   shamsi_date: ^1.0.4
   shared_preferences: ^2.4.0
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  riverpod: ^2.6.1
+  flutter_riverpod: ^2.6.1
+  flutter_speed_dial: ^7.0.0
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  build_runner: any
+  analyzer: ^5.13.0
+  isar_generator: ^3.1.0+1
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your

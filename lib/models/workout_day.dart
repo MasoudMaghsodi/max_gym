@@ -1,5 +1,5 @@
-import 'exercise_category.dart';
 import 'workout_exercise.dart';
+import 'exercise_category.dart';
 
 class WorkoutDay {
   // نام روز تمرین
@@ -18,4 +18,19 @@ class WorkoutDay {
     required this.exercises,
     this.isRestDay = false,
   });
+
+  // تابع copyWith برای کپی کردن و به‌روزرسانی خصوصیات
+  WorkoutDay copyWith({
+    String? dayName,
+    List<ExerciseCategory>? categories,
+    List<WorkoutExercise>? exercises,
+    bool? isRestDay,
+  }) {
+    return WorkoutDay(
+      dayName: dayName ?? this.dayName,
+      categories: categories ?? this.categories,
+      exercises: exercises ?? this.exercises,
+      isRestDay: isRestDay ?? this.isRestDay,
+    );
+  }
 }

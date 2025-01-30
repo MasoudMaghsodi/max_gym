@@ -1,30 +1,30 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
-import '../../models/preferences_manager.dart';
-import '../../models/exercise_data.dart';
-import '../../models/workout_day.dart';
-import '../models/workout_exercise.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/workout_day.dart';
 import '../widgets/day_card.dart';
+import '../providers/workout_provider.dart';
 import 'exercise_detail_screen.dart';
 
-class ExerciseOverviewScreen extends StatefulWidget {
+class ExerciseOverviewScreen extends ConsumerStatefulWidget {
   const ExerciseOverviewScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ExerciseOverviewScreenState createState() => _ExerciseOverviewScreenState();
 }
 
-class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
-  final Map<String, WorkoutDay> _days = {};
-
+class _ExerciseOverviewScreenState
+    extends ConsumerState<ExerciseOverviewScreen> {
   @override
   void initState() {
     super.initState();
     _loadAllDays();
   }
 
+  final Map<String, WorkoutDay> _days = {};
+
   Future<void> _loadAllDays() async {
-    await PreferencesManager.init();
     setState(() {
       for (var day in [
         'شنبه',
@@ -35,42 +35,9 @@ class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
         'پنج‌شنبه',
         'جمعه'
       ]) {
-        _days[day] = _getWorkoutDay(day);
+        _days[day] = ref.read(workoutProvider.notifier).getWorkoutDay(day);
       }
     });
-  }
-
-  WorkoutDay _getWorkoutDay(String day) {
-    final savedExercises = PreferencesManager.getString(day) ?? '';
-    final savedCategories =
-        PreferencesManager.getString('${day}_categories') ?? '';
-    final categories =
-        savedCategories.isNotEmpty ? savedCategories.split(',').toList() : [];
-
-    return WorkoutDay(
-      dayName: day,
-      categories: exerciseCategories
-          .where((cat) => categories.contains(cat.name))
-          .toList(),
-      exercises: savedExercises.isNotEmpty
-          ? savedExercises.split(',').map((e) {
-              final parts = e.split('|');
-              return WorkoutExercise(
-                parts[0],
-                int.tryParse(parts[1]) ?? 0,
-                int.tryParse(parts[2]) ?? 0,
-                technique: parts.length > 3 ? parts[3] : null,
-                superSet: parts.length > 4 ? parts[4] : null,
-                superSetReps: parts.length > 5 ? int.tryParse(parts[5]) : null,
-                superSetTechnique: parts.length > 6 ? parts[6] : null,
-                triSet: parts.length > 7 ? parts[7] : null,
-                triSetReps: parts.length > 8 ? int.tryParse(parts[8]) : null,
-                triSetTechnique: parts.length > 9 ? parts[9] : null,
-              );
-            }).toList()
-          : [],
-      isRestDay: savedExercises.isEmpty && savedCategories.isEmpty,
-    );
   }
 
   Future<void> _navigateToDetailScreen(String day) async {
@@ -83,9 +50,7 @@ class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
 
     if (result != null && result.containsKey('categories')) {
       setState(() {
-        _days[day]?.categories = exerciseCategories
-            .where((cat) => result['categories'].contains(cat.name))
-            .toList();
+        _days[day]?.categories = result['categories'];
       });
     }
   }
@@ -114,38 +79,20 @@ class _ExerciseOverviewScreenState extends State<ExerciseOverviewScreen> {
             onTap: () => _navigateToDetailScreen(dayName),
             child: DayCard(
               day: workoutDay,
-              categories: exerciseCategories,
+              categories: workoutDay.categories,
               onCategoryAdded: (category) {
                 setState(() {
                   _days[dayName]?.categories.add(category);
-                  PreferencesManager.setString(
-                      dayName,
-                      _days[dayName]
-                              ?.categories
-                              .map((cat) => cat.name)
-                              .join(',') ??
-                          '');
                 });
               },
               onCategoryRemoved: (category) {
                 setState(() {
                   _days[dayName]?.categories.remove(category);
-                  PreferencesManager.setString(
-                      dayName,
-                      _days[dayName]
-                              ?.categories
-                              .map((cat) => cat.name)
-                              .join(',') ??
-                          '');
                 });
               },
               onRestDayChanged: (isRestDay) {
                 setState(() {
                   _days[dayName]?.isRestDay = isRestDay;
-                  if (isRestDay) {
-                    _days[dayName]?.categories.clear();
-                    PreferencesManager.remove(dayName);
-                  }
                 });
               },
               onAddExercise: () {},

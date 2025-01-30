@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class ExerciseDropdown<T> extends StatelessWidget {
-  final T? value;
+class ExerciseDropdown extends StatelessWidget {
+  final String? value;
   final String hint;
-  final List<T> items;
-  final void Function(T?) onChanged;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
 
   const ExerciseDropdown({
     super.key,
@@ -16,20 +16,20 @@ class ExerciseDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<T>(
+    return DropdownButtonFormField<String>(
       value: value,
-      hint: Text(
-        hint,
-        style: const TextStyle(fontSize: 14), // تنظیم توضیح فیلد کشویی
-      ),
-      items: items.map((item) {
-        return DropdownMenuItem<T>(
+      hint: Text(hint),
+      items: items.map((String item) {
+        return DropdownMenuItem<String>(
           value: item,
-          child: Text('$item'),
+          child: Text(item),
         );
-      }).toList(), // تبدیل لیست گزینه‌ها به DropdownMenuItem
-      onChanged: onChanged, // ذخیره مقدار انتخاب شده
-      isExpanded: true, // تنظیم فیلد کشویی به حالت گسترده
+      }).toList(),
+      onChanged: onChanged,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
     );
   }
 }

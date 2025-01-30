@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class ExerciseSectionTitle extends StatelessWidget {
-  // عنوان بخش تمرین
   final String title;
 
   const ExerciseSectionTitle({
@@ -12,13 +11,13 @@ class ExerciseSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(vertical: 8.0), // فاصله عمودی بین بخش‌ها
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium!.copyWith(
-              fontWeight: FontWeight.bold, // ضخیم کردن فونت
-            ),
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

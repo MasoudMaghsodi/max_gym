@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/profile_provider.dart';
+import '../providers/workout_provider.dart';
 import 'profile_screen.dart';
 import 'workout_planner_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
@@ -10,36 +13,29 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  // شاخص انتخاب‌شده برای صفحه
-  int _selectedIndex = 0;
-  // نقشه‌ای برای ذخیره داده‌های پروفایل
-  Map<String, String> _profileData = {};
+class _MainScreenState extends ConsumerState<MainScreen> {
+  int _selectedIndex =
+      0; // تعریف متغیر _selectedIndex برای نگهداری شاخص انتخاب‌شده
 
-  // تابعی برای ارسال داده‌های پروفایل
-  void _onProfileSubmit(Map<String, String> data) {
-    setState(() {
-      _profileData = data;
-    });
-  }
-
-  // تابعی برای تغییر شاخص انتخاب‌شده
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = index; // بروزرسانی شاخص انتخاب‌شده
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final profileData = ref.watch(profileProvider);
+    final workoutDays = ref.watch(workoutProvider);
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          ProfileScreen(
-              onProfileSubmit: _onProfileSubmit), // نمایش صفحه پروفایل
+          ProfileScreen(), // نمایش صفحه پروفایل
           WorkoutPlannerScreen(
-              profileData: _profileData), // نمایش صفحه برنامه تمرین
+              profileData: profileData,
+              workoutDays: workoutDays), // نمایش صفحه برنامه تمرین
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

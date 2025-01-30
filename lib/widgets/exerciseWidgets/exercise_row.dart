@@ -21,6 +21,7 @@ class ExerciseRow extends StatefulWidget {
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _ExerciseRowState createState() => _ExerciseRowState();
 }
 
@@ -37,7 +38,6 @@ class _ExerciseRowState extends State<ExerciseRow> {
   String? triSetTechnique;
   int? selectedSets;
   int? selectedReps;
-
   bool isSuperSetEnabled = false;
   bool isTriSetEnabled = false;
 

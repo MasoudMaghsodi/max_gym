@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/workout_day.dart';
-import '../../models/exercise_category.dart';
+import '../models/workout_day.dart';
+import '../models/exercise_category.dart';
 
 class DayCard extends StatelessWidget {
   final WorkoutDay day;
@@ -8,7 +8,7 @@ class DayCard extends StatelessWidget {
   final Function(ExerciseCategory) onCategoryAdded;
   final Function(ExerciseCategory) onCategoryRemoved;
   final Function(bool) onRestDayChanged;
-  final Function() onAddExercise;
+  final VoidCallback onAddExercise;
 
   const DayCard({
     super.key,
@@ -23,49 +23,41 @@ class DayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 20),
+      elevation: 4.0,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  day.dayName,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    onRestDayChanged(!day.isRestDay);
-                  },
-                  child: Text(day.isRestDay ? 'روز تعطیل' : 'فعال'),
-                ),
-              ],
+            Text(
+              day.dayName,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            if (day.isRestDay)
-              Text('امروز روز تعطیل است',
-                  style: TextStyle(color: Colors.red, fontSize: 16)),
-            if (!day.isRestDay)
-              Wrap(
-                spacing: 8,
-                children: day.categories.map((category) {
-                  return Chip(
-                    label: Text(category.name),
-                    onDeleted: () => onCategoryRemoved(category),
-                  );
-                }).toList(),
-              ),
-            if (!day.isRestDay)
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: onAddExercise,
-                ),
-              ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text('روز استراحت'),
+              value: day.isRestDay,
+              onChanged: onRestDayChanged,
+            ),
+            const SizedBox(height: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: categories.map((category) {
+                return ListTile(
+                  title: Text(category.name),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () => onCategoryRemoved(category),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: onAddExercise,
+              child: const Text('افزودن تمرین'),
+            ),
           ],
         ),
       ),
