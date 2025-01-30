@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'screens/main_screen.dart';
 
 void main() {
-  runApp(const ProviderScope(child: MaxGymApp()));
+  runApp(const MaxGymApp());
 }
 
 class MaxGymApp extends StatelessWidget {
@@ -26,7 +24,7 @@ class MaxGymApp extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        textTheme: TextTheme(
+        textTheme: const TextTheme(
           displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold),
           titleLarge: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
           bodyMedium: TextStyle(fontSize: 14.0),
@@ -36,9 +34,34 @@ class MaxGymApp extends StatelessWidget {
           textTheme: ButtonTextTheme.primary,
         ),
       ),
-      home: Directionality(
+      home: const Directionality(
         textDirection: TextDirection.rtl,
-        child: MainScreen(),
+        child: SimpleScreen(),
+      ),
+    );
+  }
+}
+
+class SimpleScreen extends StatefulWidget {
+  const SimpleScreen({super.key});
+
+  @override
+  _SimpleScreenState createState() => _SimpleScreenState();
+}
+
+class _SimpleScreenState extends State<SimpleScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('صفحه ساده'),
+        backgroundColor: Colors.green[800],
+      ),
+      body: const Center(
+        child: Text(
+          'این یک صفحه ساده است',
+          style: TextStyle(fontSize: 18.0),
+        ),
       ),
     );
   }
