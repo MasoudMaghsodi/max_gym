@@ -294,24 +294,42 @@ class ProfileView extends ConsumerWidget {
                 // ذخیره اطلاعات
                 final controller = ref.read(athleteProvider);
                 if (controller != null) {
-                  // اطمینان از انجام عملیات ذخیره‌سازی
-                  await controller.saveAthlete(newAthlete);
+                  try {
+                    // ذخیره ورزشکار جدید
+                    await controller.addAthlete(newAthlete);
 
-                  // نمایش پیام موفقیت بعد از بسته شدن دیالوگ
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('اطلاعات با موفقیت ثبت شد')),
-                    );
+                    // نمایش پیام موفقیت
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ اطلاعات با موفقیت ثبت شد'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+
+                    // ریست فرم
+                    profileFormKey.currentState?.resetForm();
+                  } catch (e) {
+                    // نمایش خطا در صورت عدم موفقیت
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('⚠️ خطا در ذخیره‌سازی: ${e.toString()}'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
                   }
-
-                  // ریست فرم
-                  profileFormKey.currentState?.resetForm();
                 } else {
-                  // در صورت عدم وجود کنترلر
+                  // نمایش خطا در صورت عدم وجود کنترلر
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('مشکلی در ذخیره‌سازی پیش آمده است')),
+                        content: Text('⚠️ کنترلر در دسترس نیست'),
+                        duration: Duration(seconds: 3),
+                      ),
                     );
                   }
                 }

@@ -21,36 +21,38 @@ class ProfileNumWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+    return Material(
+      child: SingleChildScrollView(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: Icon(icon, color: iconColor),
+            filled: true,
+            fillColor: Colors.white.withAlpha(204),
           ),
-          prefixIcon: Icon(icon, color: iconColor),
-          filled: true,
-          fillColor: Colors.white.withAlpha(204),
+          keyboardType: TextInputType.number,
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          validator: (value) {
+            if (validator != null) {
+              return validator!(value);
+            }
+            if (required && (value == null || value.isEmpty)) {
+              return 'لطفاً $label خود را وارد کنید';
+            }
+            if (!RegExp(r'^\d+$').hasMatch(value!)) {
+              return 'لطفاً فقط عدد وارد کنید';
+            }
+            return null;
+          },
         ),
-        keyboardType: TextInputType.number,
-        inputFormatters: <TextInputFormatter>[
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        validator: (value) {
-          if (validator != null) {
-            return validator!(value);
-          }
-          if (required && (value == null || value.isEmpty)) {
-            return 'لطفاً $label خود را وارد کنید';
-          }
-          if (!RegExp(r'^\d+$').hasMatch(value!)) {
-            return 'لطفاً فقط عدد وارد کنید';
-          }
-          return null;
-        },
       ),
     );
   }

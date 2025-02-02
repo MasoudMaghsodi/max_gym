@@ -17,32 +17,32 @@ class ProfileListView extends ConsumerStatefulWidget {
 
 class ProfileListViewState extends ConsumerState<ProfileListView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _weightController = TextEditingController();
-  final TextEditingController _heightController = TextEditingController();
-  final TextEditingController _goalController = TextEditingController();
-  final TextEditingController _coachNotesController = TextEditingController();
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _ageController;
+  late TextEditingController _heightController;
+  late TextEditingController _weightController;
+  late TextEditingController _goalController;
+  late TextEditingController _coachNotesController;
   String? _selectedGender;
 
   @override
   void initState() {
     super.initState();
-    _initializeForm();
-  }
-
-  void _initializeForm() {
-    if (widget.athlete != null) {
-      _firstNameController.text = widget.athlete!.firstName;
-      _lastNameController.text = widget.athlete!.lastName;
-      _ageController.text = widget.athlete!.age.toString();
-      _weightController.text = widget.athlete!.weight.toStringAsFixed(1);
-      _heightController.text = widget.athlete!.height.toStringAsFixed(1);
-      _selectedGender = widget.athlete!.gender == Gender.male ? 'مرد' : 'زن';
-      _goalController.text = widget.athlete!.goal ?? '';
-      _coachNotesController.text = widget.athlete!.coachNotes ?? '';
-    }
+    _firstNameController =
+        TextEditingController(text: widget.athlete?.firstName ?? '');
+    _lastNameController =
+        TextEditingController(text: widget.athlete?.lastName ?? '');
+    _ageController =
+        TextEditingController(text: widget.athlete?.age.toString() ?? '');
+    _heightController =
+        TextEditingController(text: widget.athlete?.height.toString() ?? '');
+    _weightController =
+        TextEditingController(text: widget.athlete?.weight.toString() ?? '');
+    _goalController = TextEditingController(text: widget.athlete?.goal ?? '');
+    _coachNotesController =
+        TextEditingController(text: widget.athlete?.coachNotes ?? '');
+    _selectedGender = widget.athlete?.gender == Gender.male ? 'مرد' : 'زن';
   }
 
   @override
@@ -50,8 +50,8 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _ageController.dispose();
-    _weightController.dispose();
     _heightController.dispose();
+    _weightController.dispose();
     _goalController.dispose();
     _coachNotesController.dispose();
     super.dispose();
@@ -62,11 +62,13 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
     _firstNameController.clear();
     _lastNameController.clear();
     _ageController.clear();
-    _weightController.clear();
     _heightController.clear();
+    _weightController.clear();
     _goalController.clear();
     _coachNotesController.clear();
-    setState(() => _selectedGender = null);
+    setState(() {
+      _selectedGender = null;
+    });
   }
 
   bool validateForm() {
@@ -75,14 +77,14 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
 
   Map<String, String> collectFormData() {
     return {
-      'firstName': _firstNameController.text.trim(),
-      'lastName': _lastNameController.text.trim(),
-      'age': _ageController.text.trim(),
-      'weight': _weightController.text.trim(),
-      'height': _heightController.text.trim(),
+      'firstName': _firstNameController.text,
+      'lastName': _lastNameController.text,
+      'age': _ageController.text,
+      'height': _heightController.text,
+      'weight': _weightController.text,
       'gender': _selectedGender ?? '',
-      'goal': _goalController.text.trim(),
-      'coachNotes': _coachNotesController.text.trim(),
+      'goal': _goalController.text,
+      'coachNotes': _coachNotesController.text,
     };
   }
 

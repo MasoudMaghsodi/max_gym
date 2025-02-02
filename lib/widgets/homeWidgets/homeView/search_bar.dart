@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../providers/athleteProviders/athlete_list_provider.dart';
-import '../../view/homeScreen/home_content_view.dart';
+import '../../../providers/athleteProviders/athlete_list_provider.dart';
+import '../../../view/homeScreen/home_content_view.dart';
 
-class HomeSearchBar extends ConsumerWidget {
+class HomeSearchBar extends ConsumerStatefulWidget {
   const HomeSearchBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeSearchBar> createState() => _HomeSearchBarState();
+}
+
+class _HomeSearchBarState extends ConsumerState<HomeSearchBar> {
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[800],
@@ -39,25 +44,28 @@ class HomeSearchBar extends ConsumerWidget {
             ),
           ),
           IconButton(
+            icon: Icon(Icons.select_all, color: Colors.blue[400], size: 28.sp),
+            onPressed: () => _selectAllAthletes(),
+          ),
+          IconButton(
             icon:
                 Icon(Icons.delete_forever, color: Colors.red[400], size: 28.sp),
-            onPressed: () => _showDeleteAllConfirmDialog(context, ref),
+            onPressed: () => _showDeleteSelectedConfirmDialog(context),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _showDeleteAllConfirmDialog(
-      BuildContext context, WidgetRef ref) async {
+  Future<void> _showDeleteSelectedConfirmDialog(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey[850],
-        title:
-            Text('حذف همه ورزشکاران', style: TextStyle(color: Colors.red[300])),
+        title: Text('حذف ورزشکاران انتخاب شده',
+            style: TextStyle(color: Colors.red[300])),
         content: Text(
-          'آیا مطمئن هستید که می‌خواهید تمام داده‌های کاربران را حذف کنید؟',
+          'آیا مطمئن هستید که می‌خواهید تمام ورزشکاران انتخاب شده را حذف کنید؟',
           style: TextStyle(color: Colors.grey[300]),
         ),
         actions: [
@@ -74,8 +82,29 @@ class HomeSearchBar extends ConsumerWidget {
     );
 
     if (confirm == true) {
-      await ref.read(athleteProvider)?.deleteAllAthletes();
-      ref.read(refreshTriggerProvider.notifier).state++;
+      await _deleteSelectedAthletes();
     }
+  }
+
+  Future<void> _deleteSelectedAthletes() async {
+    final provider = ref.read(athleteProvider);
+    if (provider != null) {
+      final selectedAthletes = ref.read(selectedAthletesProvider);
+      for (final athleteId in selectedAthletes) {
+        await provider.deleteAthlete(athleteId);
+      }
+      ref.read(selectedAthletesProvider.notifier).state = [];
+      ref.read(refreshTriggerProvider.notifier).state++;
+      ref.read(searchQueryProvider.notifier).state =
+          ''; // Reset the search query after deletion
+    }
+  }
+
+  void _selectAllAthletes() {
+    final athletesFuture = ref.read(athleteProvider)?.getAllAthletes();
+    athletesFuture?.then((athletes) {
+      final athleteIds = athletes.map((athlete) => athlete.id).toList();
+      ref.read(selectedAthletesProvider.notifier).state = athleteIds;
+    });
   }
 }

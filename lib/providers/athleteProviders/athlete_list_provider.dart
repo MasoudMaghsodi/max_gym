@@ -14,29 +14,65 @@ class AthleteController {
 
   AthleteController(this.isar);
 
-  // ذخیره Athlete جدید
-  Future<void> saveAthlete(Athlete athlete) async {
-    await isar.writeTxn(() async => await isar.athletes.put(athlete));
+  /// افزودن ورزشکار جدید با ID خودکار
+  Future<int> addAthlete(Athlete athlete) async {
+    try {
+      return await isar.writeTxn(() async {
+        // تنظیم ID به null برای تولید خودکار
+        athlete.id = Isar.autoIncrement;
+        return isar.athletes.put(athlete);
+      });
+    } catch (e) {
+      throw Exception('⚠️ خطا در ایجاد ورزشکار جدید: ${e.toString()}');
+    }
   }
 
-  // حذف تمام Athleteها
+  /// حذف همه ورزشکاران
   Future<void> deleteAllAthletes() async {
-    await isar.writeTxn(() async {
-      await isar.athletes.clear();
-    });
+    try {
+      await isar.writeTxn(() async => isar.athletes.clear());
+    } catch (e) {
+      throw Exception('⚠️ خطا در حذف کلیه ورزشکاران: ${e.toString()}');
+    }
   }
 
-  Future<void> deleteAthlete(int id) async {
-    await isar.writeTxn(() async => await isar.athletes.delete(id));
+  /// حذف ورزشکار بر اساس شناسه
+  Future<bool> deleteAthlete(int id) async {
+    try {
+      return await isar.writeTxn(() async => isar.athletes.delete(id));
+    } catch (e) {
+      throw Exception('⚠️ خطا در حذف ورزشکار: ${e.toString()}');
+    }
   }
 
-  // دریافت تمام Athleteها
+  /// دریافت لیست تمام ورزشکاران
   Future<List<Athlete>> getAllAthletes() async {
-    return await isar.athletes.where().findAll();
+    try {
+      return await isar.athletes.where().findAll();
+    } catch (e) {
+      throw Exception('⚠️ خطا در دریافت لیست ورزشکاران: ${e.toString()}');
+    }
   }
 
-  // در کلاس AthleteController
+  /// به‌روزرسانی اطلاعات ورزشکار
   Future<void> updateAthlete(Athlete athlete) async {
-    await isar.writeTxn(() async => await isar.athletes.put(athlete));
+    try {
+      await isar.writeTxn(() async => isar.athletes.put(athlete));
+    } catch (e) {
+      throw Exception('⚠️ خطا در به‌روزرسانی اطلاعات: ${e.toString()}');
+    }
+  }
+
+  /// ایجاد کپی از ورزشکار با ID جدید
+  Future<Athlete> duplicateAthlete(Athlete original) async {
+    try {
+      final newAthlete = original.copyWith(
+        id: Isar.autoIncrement, // تولید ID جدید
+      );
+      await isar.writeTxn(() async => isar.athletes.put(newAthlete));
+      return newAthlete;
+    } catch (e) {
+      throw Exception('⚠️ خطا در ایجاد کپی: ${e.toString()}');
+    }
   }
 }

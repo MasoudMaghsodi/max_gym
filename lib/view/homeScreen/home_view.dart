@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:max_gym/view/profileScreen/profile_view.dart';
 import '../../controller/homeController/btm_controller.dart';
-import '../../widgets/homeWidgets/btm_bar_widget.dart';
+import '../../widgets/homeWidgets/homeContent/btm_bar_widget.dart';
 import 'home_content_view.dart';
 
 class HomeView extends ConsumerWidget {

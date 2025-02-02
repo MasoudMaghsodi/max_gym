@@ -38,35 +38,37 @@ class _ProfileDropdownWidgetState extends State<ProfileDropdownWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+    return Material(
+      child: SingleChildScrollView(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: Icon(widget.icon, color: widget.color),
+            filled: true,
+            fillColor: Colors.white.withAlpha(204),
           ),
-          prefixIcon: Icon(widget.icon, color: widget.color),
-          filled: true,
-          fillColor: Colors.white.withAlpha(204),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: _selectedItem,
-            hint: Text(widget.label),
-            isDense: true,
-            onChanged: (newValue) {
-              setState(() {
-                _selectedItem = newValue;
-              });
-              widget.onChanged(newValue);
-            },
-            items: widget.items.map((value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedItem,
+              hint: Text(widget.label),
+              isDense: true,
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedItem = newValue;
+                });
+                widget.onChanged(newValue);
+              },
+              items: widget.items.map((value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
