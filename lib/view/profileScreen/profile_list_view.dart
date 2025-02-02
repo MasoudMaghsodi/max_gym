@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:max_gym/widgets/profileWidgets/profile_drapdown_widget.dart';
-import 'package:max_gym/widgets/profileWidgets/profile_num_widget.dart';
+import 'package:max_gym/model/athleteModel/athlete_model.dart';
 
+import '../../widgets/profileWidgets/profile_drapdown_widget.dart';
+import '../../widgets/profileWidgets/profile_num_widget.dart';
 import '../../widgets/profileWidgets/profile_textfiled_widget.dart';
 
-// ignore: must_be_immutable
 class ProfileListView extends ConsumerStatefulWidget {
-  const ProfileListView({super.key});
+  final Athlete? athlete;
+  const ProfileListView({super.key, this.athlete});
+
   @override
   ProfileListViewState createState() => ProfileListViewState();
 }
@@ -25,8 +27,26 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
   String? _selectedGender;
 
   @override
+  void initState() {
+    super.initState();
+    _initializeForm();
+  }
+
+  void _initializeForm() {
+    if (widget.athlete != null) {
+      _firstNameController.text = widget.athlete!.firstName;
+      _lastNameController.text = widget.athlete!.lastName;
+      _ageController.text = widget.athlete!.age.toString();
+      _weightController.text = widget.athlete!.weight.toStringAsFixed(1);
+      _heightController.text = widget.athlete!.height.toStringAsFixed(1);
+      _selectedGender = widget.athlete!.gender == Gender.male ? 'مرد' : 'زن';
+      _goalController.text = widget.athlete!.goal ?? '';
+      _coachNotesController.text = widget.athlete!.coachNotes ?? '';
+    }
+  }
+
+  @override
   void dispose() {
-    // حتماً کنترلرها را در dispose پاکسازی کنید
     _firstNameController.dispose();
     _lastNameController.dispose();
     _ageController.dispose();
@@ -46,9 +66,7 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
     _heightController.clear();
     _goalController.clear();
     _coachNotesController.clear();
-    setState(() {
-      _selectedGender = null; // ریست جنسیت
-    });
+    setState(() => _selectedGender = null);
   }
 
   bool validateForm() {
@@ -57,14 +75,14 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
 
   Map<String, String> collectFormData() {
     return {
-      'firstName': _firstNameController.text,
-      'lastName': _lastNameController.text,
-      'age': _ageController.text,
-      'weight': _weightController.text,
-      'height': _heightController.text,
+      'firstName': _firstNameController.text.trim(),
+      'lastName': _lastNameController.text.trim(),
+      'age': _ageController.text.trim(),
+      'weight': _weightController.text.trim(),
+      'height': _heightController.text.trim(),
       'gender': _selectedGender ?? '',
-      'goal': _goalController.text,
-      'coachNotes': _coachNotesController.text,
+      'goal': _goalController.text.trim(),
+      'coachNotes': _coachNotesController.text.trim(),
     };
   }
 
@@ -72,75 +90,101 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Column(
+      child: ListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(vertical: 16.h),
         children: [
-          profileTextFieldWidgeet(
+          ProfileTextFieldWidget(
             controller: _firstNameController,
             label: "نام",
             icon: Icons.person,
             iconColor: Colors.indigo,
-            required: true,
+            customValidator: (value) => _validateRequiredField(value, 'نام'),
           ),
           SizedBox(height: 16.h),
-          profileTextFieldWidgeet(
+          ProfileTextFieldWidget(
             controller: _lastNameController,
             label: "نام خانوادگی",
             icon: Icons.person_outline_outlined,
             iconColor: Colors.indigo,
-            required: true,
+            customValidator: (value) =>
+                _validateRequiredField(value, 'نام خانوادگی'),
           ),
           SizedBox(height: 16.h),
-          profileNumWidget(
+          ProfileNumWidget(
             controller: _ageController,
             label: "سن",
             icon: Icons.cake_sharp,
             iconColor: Colors.green,
-            required: true,
+            validator: (value) => _validateNumericField(value, 'سن'),
           ),
           SizedBox(height: 16.h),
-          profileNumWidget(
+          ProfileNumWidget(
             controller: _heightController,
             label: "قد",
             icon: Icons.height_sharp,
             iconColor: Colors.orange,
-            required: true,
+            // decimal: true,
+            validator: (value) => _validateNumericField(value, 'قد'),
           ),
           SizedBox(height: 16.h),
-          profileNumWidget(
+          ProfileNumWidget(
             controller: _weightController,
             label: "وزن",
             icon: Icons.scale_sharp,
             iconColor: Colors.red,
-            required: true,
+            // decimal: true,
+            validator: (value) => _validateNumericField(value, 'وزن'),
           ),
           SizedBox(height: 16.h),
-          profileDropdownWidget(
+          ProfileDropdownWidget(
             label: "جنسیت",
             icon: Icons.person,
-            items: ["مرد", "زن"],
+            items: const ["مرد", "زن"],
             required: true,
-            onChanged: (value) {
-              _selectedGender = value;
-            },
+            onChanged: (value) => setState(() => _selectedGender = value),
             selectedItem: _selectedGender,
             color: Colors.blueAccent,
+            validator: (value) =>
+                value == null ? 'لطفا جنسیت را انتخاب کنید' : null,
           ),
           SizedBox(height: 16.h),
-          profileTextFieldWidgeet(
+          ProfileTextFieldWidget(
             controller: _goalController,
             label: "هدف",
             icon: Icons.flag_circle_rounded,
             iconColor: Colors.teal,
+            maxLines: 3,
           ),
           SizedBox(height: 16.h),
-          profileTextFieldWidgeet(
+          ProfileTextFieldWidget(
             controller: _coachNotesController,
             label: "نظر مربی",
             icon: Icons.note_alt_outlined,
             iconColor: Colors.yellow.shade800,
+            maxLines: 4,
           ),
         ],
       ),
     );
+  }
+
+  String? _validateRequiredField(String? value, String fieldName) {
+    if (value == null || value.isEmpty) {
+      return 'لطفا $fieldName را وارد کنید';
+    }
+    return null;
+  }
+
+  String? _validateNumericField(String? value, String fieldName) {
+    final error = _validateRequiredField(value, fieldName);
+    if (error != null) return error;
+
+    final number = double.tryParse(value!);
+    if (number == null || number <= 0) {
+      return 'مقدار $fieldName نامعتبر است';
+    }
+    return null;
   }
 }

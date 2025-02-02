@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:max_gym/view/profileScreen/profile_list_view.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/model/athleteModel/athlete_model.dart';
-import '../../providers/athleteProviders/athlete_list_provider.dart';
+import 'package:max_gym/providers/athleteProviders/athlete_list_provider.dart';
+import 'package:max_gym/view/profileScreen/profile_list_view.dart';
 
 class ProfileView extends ConsumerWidget {
-  const ProfileView({super.key});
+  final Athlete? athlete;
+  const ProfileView({super.key, this.athlete});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileFormKey = GlobalKey<ProfileListViewState>();
     return Scaffold(
-      body: _buildResponsiveLayout(profileFormKey, ref),
+      resizeToAvoidBottomInset: true,
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: _buildResponsiveLayout(profileFormKey, ref),
+      ),
     );
   }
 
@@ -31,10 +36,7 @@ class ProfileView extends ConsumerWidget {
       WidgetRef ref, BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          flex: 2,
-          child: _buildBackgroundImage(),
-        ),
+        Expanded(flex: 2, child: _buildBackgroundImage()),
         Expanded(
           flex: 3,
           child: Padding(
@@ -50,51 +52,66 @@ class ProfileView extends ConsumerWidget {
       WidgetRef ref, BuildContext context) {
     return Stack(
       children: [
-        _buildBackgroundImage(),
-        SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: _buildProfileCard(profileFormKey, ref, context),
+        Positioned.fill(child: _buildBackgroundImage()),
+        Positioned.fill(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+              left: 16.w,
+              right: 16.w,
+              top: 16.w,
+            ),
+            child: _buildProfileCard(profileFormKey, ref, context),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildBackgroundImage() {
-    return Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          opacity: 0.6,
-          image: AssetImage('assets/image/max.png'),
-          fit: BoxFit.fill,
-          alignment: Alignment.center,
+    return IgnorePointer(
+      child: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            opacity: 0.6,
+            image: AssetImage('assets/image/max.png'),
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
         ),
       ),
     );
   }
 
-  // اصلاح متد _buildProfileCard
   Widget _buildProfileCard(GlobalKey<ProfileListViewState> profileFormKey,
       WidgetRef ref, BuildContext context) {
     return Card(
-      color: Colors.white.withValues(alpha: 0.8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.r),
-      ),
+      color: Colors.white.withOpacity(0.8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
       elevation: 8,
       child: Padding(
         padding: EdgeInsets.all(24.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ProfileListView(
-              key: profileFormKey,
-            ),
+            ProfileListView(key: profileFormKey, athlete: athlete),
             SizedBox(height: 24.h),
-            // دکمه ثبت
-            _buildSubmitButton(profileFormKey, ref, context),
+            if (athlete == null)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSubmitButton(profileFormKey, ref, context),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: _buildResetButton(profileFormKey),
+                  ),
+                ],
+              ),
+            if (athlete != null)
+              _buildUpdateAndCancelButtons(profileFormKey, ref, context),
             SizedBox(height: 16.h),
-            // دکمه‌های عملیاتی
-            _buildActionButtons(profileFormKey, context, ref),
           ],
         ),
       ),
@@ -107,9 +124,8 @@ class ProfileView extends ConsumerWidget {
       onPressed: () => _handleFormSubmission(profileFormKey, ref, context),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.green,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 28.w),
       ),
       child: Text(
@@ -119,52 +135,111 @@ class ProfileView extends ConsumerWidget {
     );
   }
 
-  void _handleFormSubmission(
-    GlobalKey<ProfileListViewState> profileFormKey,
-    WidgetRef ref,
-    BuildContext context,
-  ) async {
+  Widget _buildResetButton(GlobalKey<ProfileListViewState> profileFormKey) {
+    return ElevatedButton(
+      onPressed: () => profileFormKey.currentState?.resetForm(),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 28.w),
+      ),
+      child: Text(
+        'ریست فرم',
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildUpdateAndCancelButtons(
+      GlobalKey<ProfileListViewState> profileFormKey,
+      WidgetRef ref,
+      BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        ElevatedButton(
+          onPressed: () => _handleUpdateProfile(profileFormKey, ref, context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r)),
+            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 28.w),
+          ),
+          child: Text(
+            'آپدیت',
+            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r)),
+            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 28.w),
+          ),
+          child: Text(
+            'لغو',
+            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleFormSubmission(GlobalKey<ProfileListViewState> profileFormKey,
+      WidgetRef ref, BuildContext context) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future.delayed(const Duration(milliseconds: 100));
+
     if (profileFormKey.currentState?.validateForm() ?? false) {
       final profileData = profileFormKey.currentState?.collectFormData();
       if (profileData != null) {
-        _showConfirmationDialog(context, profileData, ref);
+        _showConfirmationDialog(context, profileData, ref, profileFormKey);
       }
     }
   }
 
-  void _handleDeleteData(BuildContext context, WidgetRef ref) async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('حذف داده‌ها'),
-        content:
-            const Text('آیا از حذف تمام داده‌های ذخیره شده اطمینان دارید؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('لغو'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final controller = ref.read(athleteProvider);
-              await controller.deleteAllAthletes();
-              // ignore: use_build_context_synchronously
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('داده‌ها با موفقیت حذف شدند')),
-              );
-            },
-            child: const Text('تأیید', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+  void _handleUpdateProfile(GlobalKey<ProfileListViewState> profileFormKey,
+      WidgetRef ref, BuildContext context) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    if (profileFormKey.currentState?.validateForm() ?? false) {
+      final profileData = profileFormKey.currentState?.collectFormData();
+      if (profileData != null) {
+        final updatedAthlete = Athlete()
+          ..id = athlete!.id
+          ..firstName = profileData['firstName']!
+          ..lastName = profileData['lastName']!
+          ..age = int.parse(profileData['age']!)
+          ..height = double.parse(profileData['height']!)
+          ..weight = double.parse(profileData['weight']!)
+          ..gender =
+              profileData['gender'] == 'مرد' ? Gender.male : Gender.female
+          ..goal = profileData['goal']
+          ..coachNotes = profileData['coachNotes'];
+
+        final controller = ref.read(athleteProvider);
+        if (controller != null) {
+          await controller.updateAthlete(updatedAthlete);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('اطلاعات با موفقیت به‌روزرسانی شد')),
+          );
+
+          Navigator.pop(context);
+        }
+      }
+    }
   }
 
   void _showConfirmationDialog(
     BuildContext context,
     Map<String, String> profileData,
     WidgetRef ref,
+    GlobalKey<ProfileListViewState> profileFormKey,
   ) {
     showDialog(
       context: context,
@@ -188,9 +263,7 @@ class ProfileView extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // بستن دیالوگ
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'ویرایش',
                 textAlign: TextAlign.right,
@@ -199,10 +272,14 @@ class ProfileView extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop(); // بستن دیالوگ
+                // بستن دیالوگ
+                Navigator.of(context).pop();
 
-                // تبدیل داده‌های فرم به مدل Athlete
-                final athlete = Athlete()
+                // با استفاده از Future.delayed برای اطمینان از اتمام بسته شدن دیالوگ
+                await Future.delayed(const Duration(milliseconds: 100));
+
+                // ایجاد شیء Athlete
+                final newAthlete = Athlete()
                   ..firstName = profileData['firstName']!
                   ..lastName = profileData['lastName']!
                   ..age = int.parse(profileData['age']!)
@@ -214,15 +291,30 @@ class ProfileView extends ConsumerWidget {
                   ..goal = profileData['goal']
                   ..coachNotes = profileData['coachNotes'];
 
-                // ذخیره در دیتابیس
+                // ذخیره اطلاعات
                 final controller = ref.read(athleteProvider);
-                await controller.saveAthlete(athlete);
+                if (controller != null) {
+                  // اطمینان از انجام عملیات ذخیره‌سازی
+                  await controller.saveAthlete(newAthlete);
 
-                // نمایش پیام موفقیت
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('اطلاعات با موفقیت ثبت شد')),
-                );
+                  // نمایش پیام موفقیت بعد از بسته شدن دیالوگ
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('اطلاعات با موفقیت ثبت شد')),
+                    );
+                  }
+
+                  // ریست فرم
+                  profileFormKey.currentState?.resetForm();
+                } else {
+                  // در صورت عدم وجود کنترلر
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('مشکلی در ذخیره‌سازی پیش آمده است')),
+                    );
+                  }
+                }
               },
               child: Text(
                 'تأیید',
@@ -257,92 +349,5 @@ class ProfileView extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-// افزودن ویجت برای دکمه‌های عملیاتی
-  Widget _buildActionButtons(GlobalKey<ProfileListViewState> profileFormKey,
-      BuildContext context, WidgetRef ref) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildActionButton(
-          icon: Icons.refresh,
-          color: Colors.redAccent,
-          label: 'ریست',
-          onPressed: () => profileFormKey.currentState?.resetForm(),
-        ),
-        _buildActionButton(
-          icon: Icons.delete,
-          color: Colors.red,
-          label: 'حذف',
-          onPressed: () => _handleDeleteData(context, ref),
-        ),
-        // تغییر از نمایش به آپدیت
-        _buildActionButton(
-          icon: Icons.update,
-          color: Colors.orange,
-          label: 'آپدیت',
-          onPressed: () => _handleUpdateProfile(profileFormKey, ref, context),
-        ),
-      ],
-    );
-  }
-
-// ویجت برای ایجاد دکمه‌های یکپارچه
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 12.sp,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      ),
-    );
-  }
-
-  void _handleUpdateProfile(
-    GlobalKey<ProfileListViewState> profileFormKey,
-    WidgetRef ref,
-    BuildContext context,
-  ) async {
-    if (profileFormKey.currentState?.validateForm() ?? false) {
-      final profileData = profileFormKey.currentState?.collectFormData();
-      if (profileData != null) {
-        final athlete = Athlete()
-          ..id = int.parse(profileData['id']!) // نیاز به فیلد ID در فرم
-          ..firstName = profileData['firstName']!
-          ..lastName = profileData['lastName']!
-          ..age = int.parse(profileData['age']!)
-          ..height = double.parse(profileData['height']!)
-          ..weight = double.parse(profileData['weight']!)
-          ..gender =
-              profileData['gender'] == 'مرد' ? Gender.male : Gender.female
-          ..goal = profileData['goal']
-          ..coachNotes = profileData['coachNotes'];
-
-        final controller = ref.read(athleteProvider);
-        await controller.updateAthlete(athlete);
-
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('اطلاعات با موفقیت به‌روزرسانی شد')),
-        );
-      }
-    }
   }
 }

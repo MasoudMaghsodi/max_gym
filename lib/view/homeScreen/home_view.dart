@@ -35,7 +35,7 @@ class HomeView extends ConsumerWidget {
         decoration: BoxDecoration(
           image: DecorationImage(
             image: const AssetImage('assets/image/max.jpg'),
-            fit: BoxFit.fill,
+            fit: BoxFit.cover,
             opacity: 0.5,
           ),
         ),

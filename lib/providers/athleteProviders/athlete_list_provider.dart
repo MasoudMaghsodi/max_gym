@@ -4,9 +4,9 @@ import 'package:max_gym/model/athleteModel/athlete_model.dart';
 
 import '../isarProviders/isar_provider.dart';
 
-final athleteProvider = Provider((ref) {
-  final isar = ref.watch(isarProvider).value!;
-  return AthleteController(isar);
+final athleteProvider = Provider<AthleteController?>((ref) {
+  final isar = ref.watch(isarProvider).value;
+  return isar != null ? AthleteController(isar) : null;
 });
 
 class AthleteController {
@@ -16,9 +16,7 @@ class AthleteController {
 
   // ذخیره Athlete جدید
   Future<void> saveAthlete(Athlete athlete) async {
-    await isar.writeTxn(() async {
-      await isar.athletes.put(athlete);
-    });
+    await isar.writeTxn(() async => await isar.athletes.put(athlete));
   }
 
   // حذف تمام Athleteها
@@ -28,6 +26,10 @@ class AthleteController {
     });
   }
 
+  Future<void> deleteAthlete(int id) async {
+    await isar.writeTxn(() async => await isar.athletes.delete(id));
+  }
+
   // دریافت تمام Athleteها
   Future<List<Athlete>> getAllAthletes() async {
     return await isar.athletes.where().findAll();
@@ -35,8 +37,6 @@ class AthleteController {
 
   // در کلاس AthleteController
   Future<void> updateAthlete(Athlete athlete) async {
-    await isar.writeTxn(() async {
-      await isar.athletes.put(athlete);
-    });
+    await isar.writeTxn(() async => await isar.athletes.put(athlete));
   }
 }
