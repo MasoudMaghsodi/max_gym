@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/model/athleteModel/athlete_model.dart';
 import 'package:max_gym/providers/athleteProviders/athlete_list_provider.dart';
-import 'package:max_gym/view/profileScreen/profile_list_view.dart';
+import 'package:max_gym/widgets/profileWidgets/profile_list_view.dart';
 
 class ProfileView extends ConsumerWidget {
   final Athlete? athlete;

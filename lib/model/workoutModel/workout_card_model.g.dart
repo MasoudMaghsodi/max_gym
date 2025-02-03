@@ -27,63 +27,68 @@ const WorkoutCardSchema = CollectionSchema(
       name: r'exerciseId',
       type: IsarType.long,
     ),
-    r'muscleGroupId': PropertySchema(
+    r'isValid': PropertySchema(
       id: 2,
+      name: r'isValid',
+      type: IsarType.bool,
+    ),
+    r'muscleGroupId': PropertySchema(
+      id: 3,
       name: r'muscleGroupId',
       type: IsarType.long,
     ),
     r'reps': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'reps',
       type: IsarType.long,
     ),
     r'sets': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'sets',
       type: IsarType.long,
     ),
     r'supersetExerciseId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'supersetExerciseId',
       type: IsarType.long,
     ),
     r'supersetReps': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'supersetReps',
       type: IsarType.long,
     ),
     r'supersetSets': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'supersetSets',
       type: IsarType.long,
     ),
     r'supersetTechniqueId': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'supersetTechniqueId',
       type: IsarType.long,
     ),
     r'techniqueId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'techniqueId',
       type: IsarType.long,
     ),
     r'trisetExerciseId': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'trisetExerciseId',
       type: IsarType.long,
     ),
     r'trisetReps': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'trisetReps',
       type: IsarType.long,
     ),
     r'trisetSets': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'trisetSets',
       type: IsarType.long,
     ),
     r'trisetTechniqueId': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'trisetTechniqueId',
       type: IsarType.long,
     )
@@ -119,18 +124,19 @@ void _workoutCardSerialize(
 ) {
   writer.writeLong(offsets[0], object.athleteId);
   writer.writeLong(offsets[1], object.exerciseId);
-  writer.writeLong(offsets[2], object.muscleGroupId);
-  writer.writeLong(offsets[3], object.reps);
-  writer.writeLong(offsets[4], object.sets);
-  writer.writeLong(offsets[5], object.supersetExerciseId);
-  writer.writeLong(offsets[6], object.supersetReps);
-  writer.writeLong(offsets[7], object.supersetSets);
-  writer.writeLong(offsets[8], object.supersetTechniqueId);
-  writer.writeLong(offsets[9], object.techniqueId);
-  writer.writeLong(offsets[10], object.trisetExerciseId);
-  writer.writeLong(offsets[11], object.trisetReps);
-  writer.writeLong(offsets[12], object.trisetSets);
-  writer.writeLong(offsets[13], object.trisetTechniqueId);
+  writer.writeBool(offsets[2], object.isValid);
+  writer.writeLong(offsets[3], object.muscleGroupId);
+  writer.writeLong(offsets[4], object.reps);
+  writer.writeLong(offsets[5], object.sets);
+  writer.writeLong(offsets[6], object.supersetExerciseId);
+  writer.writeLong(offsets[7], object.supersetReps);
+  writer.writeLong(offsets[8], object.supersetSets);
+  writer.writeLong(offsets[9], object.supersetTechniqueId);
+  writer.writeLong(offsets[10], object.techniqueId);
+  writer.writeLong(offsets[11], object.trisetExerciseId);
+  writer.writeLong(offsets[12], object.trisetReps);
+  writer.writeLong(offsets[13], object.trisetSets);
+  writer.writeLong(offsets[14], object.trisetTechniqueId);
 }
 
 WorkoutCard _workoutCardDeserialize(
@@ -139,22 +145,23 @@ WorkoutCard _workoutCardDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = WorkoutCard();
-  object.athleteId = reader.readLong(offsets[0]);
-  object.exerciseId = reader.readLong(offsets[1]);
-  object.id = id;
-  object.muscleGroupId = reader.readLong(offsets[2]);
-  object.reps = reader.readLong(offsets[3]);
-  object.sets = reader.readLong(offsets[4]);
-  object.supersetExerciseId = reader.readLongOrNull(offsets[5]);
-  object.supersetReps = reader.readLongOrNull(offsets[6]);
-  object.supersetSets = reader.readLongOrNull(offsets[7]);
-  object.supersetTechniqueId = reader.readLongOrNull(offsets[8]);
-  object.techniqueId = reader.readLongOrNull(offsets[9]);
-  object.trisetExerciseId = reader.readLongOrNull(offsets[10]);
-  object.trisetReps = reader.readLongOrNull(offsets[11]);
-  object.trisetSets = reader.readLongOrNull(offsets[12]);
-  object.trisetTechniqueId = reader.readLongOrNull(offsets[13]);
+  final object = WorkoutCard(
+    athleteId: reader.readLong(offsets[0]),
+    exerciseId: reader.readLong(offsets[1]),
+    id: id,
+    muscleGroupId: reader.readLong(offsets[3]),
+    reps: reader.readLong(offsets[4]),
+    sets: reader.readLong(offsets[5]),
+    supersetExerciseId: reader.readLongOrNull(offsets[6]),
+    supersetReps: reader.readLongOrNull(offsets[7]),
+    supersetSets: reader.readLongOrNull(offsets[8]),
+    supersetTechniqueId: reader.readLongOrNull(offsets[9]),
+    techniqueId: reader.readLongOrNull(offsets[10]),
+    trisetExerciseId: reader.readLongOrNull(offsets[11]),
+    trisetReps: reader.readLongOrNull(offsets[12]),
+    trisetSets: reader.readLongOrNull(offsets[13]),
+    trisetTechniqueId: reader.readLongOrNull(offsets[14]),
+  );
   return object;
 }
 
@@ -170,13 +177,13 @@ P _workoutCardDeserializeProp<P>(
     case 1:
       return (reader.readLong(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
       return (reader.readLong(offset)) as P;
     case 4:
       return (reader.readLong(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
       return (reader.readLongOrNull(offset)) as P;
     case 7:
@@ -192,6 +199,8 @@ P _workoutCardDeserializeProp<P>(
     case 12:
       return (reader.readLongOrNull(offset)) as P;
     case 13:
+      return (reader.readLongOrNull(offset)) as P;
+    case 14:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -452,6 +461,16 @@ extension WorkoutCardQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutCard, WorkoutCard, QAfterFilterCondition> isValidEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isValid',
+        value: value,
       ));
     });
   }
@@ -1317,6 +1336,18 @@ extension WorkoutCardQuerySortBy
     });
   }
 
+  QueryBuilder<WorkoutCard, WorkoutCard, QAfterSortBy> sortByIsValid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WorkoutCard, WorkoutCard, QAfterSortBy> sortByIsValidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.desc);
+    });
+  }
+
   QueryBuilder<WorkoutCard, WorkoutCard, QAfterSortBy> sortByMuscleGroupId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'muscleGroupId', Sort.asc);
@@ -1511,6 +1542,18 @@ extension WorkoutCardQuerySortThenBy
     });
   }
 
+  QueryBuilder<WorkoutCard, WorkoutCard, QAfterSortBy> thenByIsValid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WorkoutCard, WorkoutCard, QAfterSortBy> thenByIsValidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.desc);
+    });
+  }
+
   QueryBuilder<WorkoutCard, WorkoutCard, QAfterSortBy> thenByMuscleGroupId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'muscleGroupId', Sort.asc);
@@ -1681,6 +1724,12 @@ extension WorkoutCardQueryWhereDistinct
     });
   }
 
+  QueryBuilder<WorkoutCard, WorkoutCard, QDistinct> distinctByIsValid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isValid');
+    });
+  }
+
   QueryBuilder<WorkoutCard, WorkoutCard, QDistinct> distinctByMuscleGroupId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'muscleGroupId');
@@ -1775,6 +1824,12 @@ extension WorkoutCardQueryProperty
   QueryBuilder<WorkoutCard, int, QQueryOperations> exerciseIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'exerciseId');
+    });
+  }
+
+  QueryBuilder<WorkoutCard, bool, QQueryOperations> isValidProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isValid');
     });
   }
 

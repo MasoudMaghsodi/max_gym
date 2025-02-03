@@ -5,9 +5,9 @@ import 'package:max_gym/model/athleteModel/athlete_model.dart';
 import 'package:max_gym/providers/athleteProviders/athlete_list_provider.dart';
 import 'package:max_gym/view/profileScreen/profile_view.dart';
 
-import '../../widgets/homeWidgets/homeView/athlete_card.dart';
-import '../../widgets/homeWidgets/homeView/empty_state.dart';
-import '../../widgets/homeWidgets/homeView/search_bar.dart';
+import '../../widgets/homeWidgets/homeContent/athlete_card.dart';
+import '../../widgets/homeWidgets/homeContent/empty_state.dart';
+import '../../widgets/homeWidgets/homeContent/search_bar.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 final refreshTriggerProvider = StateProvider<int>((ref) => 0);

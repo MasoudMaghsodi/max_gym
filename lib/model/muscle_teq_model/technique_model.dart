@@ -5,4 +5,66 @@ part 'technique_model.g.dart';
 class Technique {
   Id id = Isar.autoIncrement;
   late String name;
+  late String nameEnglish;
 }
+
+// داده‌های پیشفرض تکنیک‌ها
+final defaultTechniques = [
+  Technique()
+    ..name = 'سوپرست'
+    ..nameEnglish = 'Superset',
+  Technique()
+    ..name = 'ترای‌ست'
+    ..nameEnglish = 'Tri-set',
+  Technique()
+    ..name = 'دراپ ست'
+    ..nameEnglish = 'Drop Set',
+  Technique()
+    ..name = 'فراسِت'
+    ..nameEnglish = 'Giant Set',
+  Technique()
+    ..name = 'هرمی صعودی'
+    ..nameEnglish = 'Ascending Pyramid',
+  Technique()
+    ..name = 'هرمی نزولی'
+    ..nameEnglish = 'Descending Pyramid',
+  Technique()
+    ..name = 'رِپ‌ها با توقف'
+    ..nameEnglish = 'Rep with Hold',
+  Technique()
+    ..name = 'تکرارهای نگاتیو'
+    ..nameEnglish = 'Negative Reps',
+  Technique()
+    ..name = 'تکرارهای جزئی'
+    ..nameEnglish = 'Partial Reps',
+  Technique()
+    ..name = 'تکرارهای شتاب‌دار'
+    ..nameEnglish = 'Accelerated Reps',
+  Technique()
+    ..name = 'تمرین ایستایی'
+    ..nameEnglish = 'Static Training',
+  Technique()
+    ..name = 'پلایومتریک'
+    ..nameEnglish = 'Plyometrics',
+  Technique()
+    ..name = 'تمرین ایزومتریک'
+    ..nameEnglish = 'Isometric Training',
+  Technique()
+    ..name = 'تمرین متمرکز'
+    ..nameEnglish = 'Concentrated Training',
+  Technique()
+    ..name = 'TUT (مدت زمان تنش عضلانی)'
+    ..nameEnglish = 'Time Under Tension (TUT)',
+  Technique()
+    ..name = 'Rest-Pause (استراحت-توقف)'
+    ..nameEnglish = 'Rest-Pause',
+  Technique()
+    ..name = 'Forced Reps (تکرارهای اجباری)'
+    ..nameEnglish = 'Forced Reps',
+  Technique()
+    ..name = 'Cheat Reps (تکرارهای تقلبی)'
+    ..nameEnglish = 'Cheat Reps',
+  Technique()
+    ..name = 'Pre-Exhaustion (پیش خستگی)'
+    ..nameEnglish = 'Pre-Exhaustion',
+];

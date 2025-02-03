@@ -21,6 +21,11 @@ const TechniqueSchema = CollectionSchema(
       id: 0,
       name: r'name',
       type: IsarType.string,
+    ),
+    r'nameEnglish': PropertySchema(
+      id: 1,
+      name: r'nameEnglish',
+      type: IsarType.string,
     )
   },
   estimateSize: _techniqueEstimateSize,
@@ -44,6 +49,7 @@ int _techniqueEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
+  bytesCount += 3 + object.nameEnglish.length * 3;
   return bytesCount;
 }
 
@@ -54,6 +60,7 @@ void _techniqueSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.name);
+  writer.writeString(offsets[1], object.nameEnglish);
 }
 
 Technique _techniqueDeserialize(
@@ -65,6 +72,7 @@ Technique _techniqueDeserialize(
   final object = Technique();
   object.id = id;
   object.name = reader.readString(offsets[0]);
+  object.nameEnglish = reader.readString(offsets[1]);
   return object;
 }
 
@@ -76,6 +84,8 @@ P _techniqueDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readString(offset)) as P;
+    case 1:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -355,6 +365,140 @@ extension TechniqueQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition> nameEnglishEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nameEnglish',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition>
+      nameEnglishGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'nameEnglish',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition> nameEnglishLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'nameEnglish',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition> nameEnglishBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'nameEnglish',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition>
+      nameEnglishStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'nameEnglish',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition> nameEnglishEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'nameEnglish',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition> nameEnglishContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'nameEnglish',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition> nameEnglishMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'nameEnglish',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition>
+      nameEnglishIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nameEnglish',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterFilterCondition>
+      nameEnglishIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'nameEnglish',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension TechniqueQueryObject
@@ -373,6 +517,18 @@ extension TechniqueQuerySortBy on QueryBuilder<Technique, Technique, QSortBy> {
   QueryBuilder<Technique, Technique, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterSortBy> sortByNameEnglish() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nameEnglish', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterSortBy> sortByNameEnglishDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nameEnglish', Sort.desc);
     });
   }
 }
@@ -402,6 +558,18 @@ extension TechniqueQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Technique, Technique, QAfterSortBy> thenByNameEnglish() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nameEnglish', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QAfterSortBy> thenByNameEnglishDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nameEnglish', Sort.desc);
+    });
+  }
 }
 
 extension TechniqueQueryWhereDistinct
@@ -410,6 +578,13 @@ extension TechniqueQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Technique, Technique, QDistinct> distinctByNameEnglish(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'nameEnglish', caseSensitive: caseSensitive);
     });
   }
 }
@@ -425,6 +600,12 @@ extension TechniqueQueryProperty
   QueryBuilder<Technique, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Technique, String, QQueryOperations> nameEnglishProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'nameEnglish');
     });
   }
 }

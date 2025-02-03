@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/model/athleteModel/athlete_model.dart';
 
-import '../../widgets/profileWidgets/profile_drapdown_widget.dart';
-import '../../widgets/profileWidgets/profile_num_widget.dart';
-import '../../widgets/profileWidgets/profile_textfiled_widget.dart';
+import 'profile_drapdown_widget.dart';
+import 'profile_num_widget.dart';
+import 'profile_textfiled_widget.dart';
 
 class ProfileListView extends ConsumerStatefulWidget {
   final Athlete? athlete;

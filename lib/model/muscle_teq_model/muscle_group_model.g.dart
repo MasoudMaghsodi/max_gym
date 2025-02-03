@@ -28,8 +28,30 @@ const MuscleGroupSchema = CollectionSchema(
   deserialize: _muscleGroupDeserialize,
   deserializeProp: _muscleGroupDeserializeProp,
   idName: r'id',
-  indexes: {},
-  links: {},
+  indexes: {
+    r'name': IndexSchema(
+      id: 879695947855722453,
+      name: r'name',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'name',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
+  links: {
+    r'exercises': LinkSchema(
+      id: -3285837403384111197,
+      name: r'exercises',
+      target: r'Exercise',
+      single: false,
+      linkName: r'muscleGroup',
+    )
+  },
   embeddedSchemas: {},
   getId: _muscleGroupGetId,
   getLinks: _muscleGroupGetLinks,
@@ -87,12 +109,14 @@ Id _muscleGroupGetId(MuscleGroup object) {
 }
 
 List<IsarLinkBase<dynamic>> _muscleGroupGetLinks(MuscleGroup object) {
-  return [];
+  return [object.exercises];
 }
 
 void _muscleGroupAttach(
     IsarCollection<dynamic> col, Id id, MuscleGroup object) {
   object.id = id;
+  object.exercises
+      .attach(col, col.isar.collection<Exercise>(), r'exercises', id);
 }
 
 extension MuscleGroupQueryWhereSort
@@ -169,6 +193,51 @@ extension MuscleGroupQueryWhere
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterWhereClause> nameEqualTo(
+      String name) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'name',
+        value: [name],
+      ));
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterWhereClause> nameNotEqualTo(
+      String name) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'name',
+              lower: [],
+              upper: [name],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'name',
+              lower: [name],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'name',
+              lower: [name],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'name',
+              lower: [],
+              upper: [name],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -364,7 +433,68 @@ extension MuscleGroupQueryObject
     on QueryBuilder<MuscleGroup, MuscleGroup, QFilterCondition> {}
 
 extension MuscleGroupQueryLinks
-    on QueryBuilder<MuscleGroup, MuscleGroup, QFilterCondition> {}
+    on QueryBuilder<MuscleGroup, MuscleGroup, QFilterCondition> {
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition> exercises(
+      FilterQuery<Exercise> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'exercises');
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition>
+      exercisesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'exercises', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition>
+      exercisesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'exercises', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition>
+      exercisesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'exercises', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition>
+      exercisesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'exercises', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition>
+      exercisesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'exercises', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<MuscleGroup, MuscleGroup, QAfterFilterCondition>
+      exercisesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(
+          r'exercises', lower, includeLower, upper, includeUpper);
+    });
+  }
+}
 
 extension MuscleGroupQuerySortBy
     on QueryBuilder<MuscleGroup, MuscleGroup, QSortBy> {
