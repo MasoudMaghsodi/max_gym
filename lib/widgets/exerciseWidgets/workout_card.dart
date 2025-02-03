@@ -1,78 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../model/dayModel/week_day_model.dart';
 
-class WorkoutCard extends StatelessWidget {
-  final String name;
-  final String muscleGroup;
-  final int sets;
-  final int reps;
-  final String technique;
+class DayCard extends ConsumerWidget {
+  final WeekDay weekDay;
+  final Function(bool)? onToggle;
 
-  const WorkoutCard({
+  const DayCard({
     super.key,
-    required this.name,
-    required this.muscleGroup,
-    required this.sets,
-    required this.reps,
-    required this.technique,
+    required this.weekDay,
+    this.onToggle,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      elevation: 5,
-      margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(16.0),
-        title: Text(
-          name,
-          style: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      elevation: 2,
+      margin: const EdgeInsets.all(8.0),
+      color: weekDay.isActive ? Colors.blue[50] : null,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'گروه عضلانی: $muscleGroup',
+              weekDay.persianName,
               style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey[700],
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+                color: weekDay.isActive ? Colors.blue : Colors.black,
               ),
             ),
-            SizedBox(height: 4.0),
-            Text(
-              'ست‌ها: $sets',
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey[700],
-              ),
-            ),
-            SizedBox(height: 4.0),
-            Text(
-              'تکرارها: $reps',
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey[700],
-              ),
-            ),
-            SizedBox(height: 4.0),
-            Text(
-              'تکنیک: $technique',
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey[700],
-              ),
+            const SizedBox(height: 8.0),
+            Switch(
+              value: weekDay.isActive,
+              activeColor: Colors.blue,
+              onChanged: (value) {
+                if (onToggle != null) {
+                  onToggle!(value);
+                }
+              },
             ),
           ],
-        ),
-        trailing: Icon(
-          Icons.check_circle_outline,
-          color: Colors.green,
-          size: 30.0,
         ),
       ),
     );

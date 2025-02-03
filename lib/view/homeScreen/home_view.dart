@@ -24,7 +24,7 @@ class HomeView extends ConsumerWidget {
     final List<String> titles = [
       'باشگاه مکس', // عنوان صفحه اصلی
       'پروفایل ورزشکار', // عنوان صفحه پروفایل
-      'پروفایل مربی', // عنوان صفحه پروفایل
+      'تمرینات هفتگی', // عنوان صفحه پروفایل
     ];
 
     return Scaffold(
