@@ -15,24 +15,29 @@ class WeekDay {
   @Index()
   late List<String> targetMuscleGroups;
 
+  // Default Constructor
   WeekDay() {
     isActive = false;
     targetMuscleGroups = [];
   }
 
+  // CopyWith Method for Immutability
   WeekDay copyWith({
+    Id? id,
     Day? day,
     bool? isActive,
     List<String>? targetMuscleGroups,
   }) {
     return WeekDay()
-      ..id = id
+      ..id = id ?? this.id
       ..day = day ?? this.day
       ..isActive = isActive ?? this.isActive
-      ..targetMuscleGroups =
-          targetMuscleGroups ?? List.from(this.targetMuscleGroups);
+      ..targetMuscleGroups = targetMuscleGroups != null
+          ? List.from(targetMuscleGroups)
+          : List.from(this.targetMuscleGroups);
   }
 
+  // Persian Day Name Getter
   String get persianName {
     switch (day) {
       case Day.saturday:
@@ -52,25 +57,30 @@ class WeekDay {
     }
   }
 
+  // Add Muscle Group
   void addMuscleGroup(String muscleGroup) {
     if (!targetMuscleGroups.contains(muscleGroup)) {
       targetMuscleGroups.add(muscleGroup);
     }
   }
 
+  // Remove Muscle Group
   void removeMuscleGroup(String muscleGroup) {
     targetMuscleGroups.remove(muscleGroup);
   }
 
+  // Validation Logic
   bool get isValid => validationError == null;
 
   String? get validationError {
     if (day == null) return 'روز هفته انتخاب نشده';
-    if (isActive && targetMuscleGroups.isEmpty)
+    if (isActive && targetMuscleGroups.isEmpty) {
       return 'حداقل یک عضله هدف انتخاب کنید';
+    }
     return null;
   }
 
+  // Static Method to Initialize Default Days
   static List<WeekDay> initialDays() {
     return Day.values.map((day) {
       return WeekDay()
@@ -80,12 +90,13 @@ class WeekDay {
     }).toList();
   }
 
+  // Override toString for Debugging
   @override
   String toString() {
     return '''
 WeekDay:
   id: $id
-  day: ${persianName}
+  day: $persianName
   isActive: $isActive
   targetMuscleGroups: ${targetMuscleGroups.join(', ')}
 ''';

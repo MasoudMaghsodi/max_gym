@@ -4,13 +4,14 @@ part 'workout_card_model.g.dart';
 @Collection()
 class WorkoutCard {
   Id id = Isar.autoIncrement;
+
   late int athleteId; // شناسه ورزشکار
   late int muscleGroupId; // شناسه گروه عضلانی
   late int exerciseId; // شناسه تمرین
   late int sets; // تعداد ست‌ها
   late int reps; // تعداد تکرارها
-  int? techniqueId; // شناسه تکنیک (اختیاری)
 
+  int? techniqueId; // شناسه تکنیک (اختیاری)
   int? supersetExerciseId; // شناسه تمرین سوپرست (اختیاری)
   int? supersetSets; // تعداد ست‌های سوپرست (اختیاری)
   int? supersetReps; // تعداد تکرارهای سوپرست (اختیاری)
@@ -21,6 +22,7 @@ class WorkoutCard {
   int? trisetReps; // تعداد تکرارهای ترای‌ست (اختیاری)
   int? trisetTechniqueId; // شناسه تکنیک ترای‌ست (اختیاری)
 
+  // Constructor
   WorkoutCard({
     this.id = Isar.autoIncrement,
     required this.athleteId,
@@ -39,6 +41,7 @@ class WorkoutCard {
     this.trisetTechniqueId,
   });
 
+  // Validation Logic
   bool get isValid {
     return athleteId > 0 &&
         muscleGroupId > 0 &&
@@ -47,8 +50,9 @@ class WorkoutCard {
         reps > 0;
   }
 
+  // CopyWith Method for Immutability
   WorkoutCard copyWith({
-    int? id,
+    Id? id,
     int? athleteId,
     int? muscleGroupId,
     int? exerciseId,
@@ -83,6 +87,7 @@ class WorkoutCard {
     );
   }
 
+  // Convert to Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -103,6 +108,7 @@ class WorkoutCard {
     };
   }
 
+  // Factory Constructor from Map
   factory WorkoutCard.fromMap(Map<String, dynamic> map) {
     return WorkoutCard(
       id: map['id'] ?? Isar.autoIncrement,
@@ -126,22 +132,22 @@ class WorkoutCard {
   @override
   String toString() {
     return '''
-WorkoutCard(
-  id: $id,
-  athleteId: $athleteId,
-  muscleGroupId: $muscleGroupId,
-  exerciseId: $exerciseId,
-  sets: $sets,
-  reps: $reps,
-  techniqueId: $techniqueId,
-  supersetExerciseId: $supersetExerciseId,
-  supersetSets: $supersetSets,
-  supersetReps: $supersetReps,
-  supersetTechniqueId: $supersetTechniqueId,
-  trisetExerciseId: $trisetExerciseId,
-  trisetSets: $trisetSets,
-  trisetReps: $trisetReps,
-  trisetTechniqueId: $trisetTechniqueId,
-)''';
+WorkoutCard:
+  id: $id
+  athleteId: $athleteId
+  muscleGroupId: $muscleGroupId
+  exerciseId: $exerciseId
+  sets: $sets
+  reps: $reps
+  techniqueId: $techniqueId
+  supersetExerciseId: $supersetExerciseId
+  supersetSets: $supersetSets
+  supersetReps: $supersetReps
+  supersetTechniqueId: $supersetTechniqueId
+  trisetExerciseId: $trisetExerciseId
+  trisetSets: $trisetSets
+  trisetReps: $trisetReps
+  trisetTechniqueId: $trisetTechniqueId
+''';
   }
 }

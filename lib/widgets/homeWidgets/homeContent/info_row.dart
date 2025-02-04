@@ -5,12 +5,18 @@ class InfoRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
+  final TextStyle? titleStyle;
+  final TextStyle? valueStyle;
+  final Color? iconColor;
 
   const InfoRow({
     super.key,
     required this.icon,
     required this.title,
     required this.value,
+    this.titleStyle,
+    this.valueStyle,
+    this.iconColor,
   });
 
   @override
@@ -20,7 +26,11 @@ class InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.blue[200], size: 22.sp),
+          Icon(
+            icon,
+            color: iconColor ?? Colors.blue[200],
+            size: 22.sp,
+          ),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -28,20 +38,22 @@ class InfoRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey[400],
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: titleStyle ??
+                      TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[400],
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey[100],
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: valueStyle ??
+                      TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[100],
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ],
             ),

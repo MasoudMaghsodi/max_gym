@@ -23,17 +23,24 @@ class ProfileDropdownWidget extends StatefulWidget {
   });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _ProfileDropdownWidgetState createState() => _ProfileDropdownWidgetState();
+  ProfileDropdownWidgetState createState() => ProfileDropdownWidgetState();
 }
 
-class _ProfileDropdownWidgetState extends State<ProfileDropdownWidget> {
-  String? _selectedItem;
+// Make the state class public
+class ProfileDropdownWidgetState extends State<ProfileDropdownWidget> {
+  late String? _selectedItem;
 
   @override
   void initState() {
     super.initState();
     _selectedItem = widget.selectedItem;
+  }
+
+  // Public method to reset the dropdown
+  void resetDropdown() {
+    setState(() {
+      _selectedItem = null; // Reset the selected item
+    });
   }
 
   @override
@@ -44,10 +51,11 @@ class _ProfileDropdownWidgetState extends State<ProfileDropdownWidget> {
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: InputDecorator(
           decoration: InputDecoration(
+            labelText: widget.label,
+            prefixIcon: Icon(widget.icon, color: widget.color),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            prefixIcon: Icon(widget.icon, color: widget.color),
             filled: true,
             fillColor: Colors.white.withAlpha(204),
           ),

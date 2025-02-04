@@ -5,17 +5,20 @@ import '../isarProviders/isar_provider.dart';
 
 // Provider برای دریافت روزها
 final weekDaysProvider = FutureProvider<List<WeekDay>>((ref) async {
-  final isar = await ref.watch(isarProvider.future);
-  final days = await isar.weekDays.where().findAll();
-  if (days.isEmpty) {
-    // اگر روزی وجود نداشت، روزهای اولیه را ایجاد کنید
-    final initialDays = WeekDay.initialDays();
-    await isar.writeTxn(() async {
-      await isar.weekDays.putAll(initialDays);
-    });
-    return initialDays;
-  } else {
+  try {
+    final isar = await ref.watch(isarProvider.future);
+    final days = await isar.weekDays.where().findAll();
+
+    if (days.isEmpty) {
+      // اگر روزی وجود نداشت، روزهای اولیه را ایجاد کنید
+      final initialDays = WeekDay.initialDays();
+      await isar.writeTxn(() => isar.weekDays.putAll(initialDays));
+      return initialDays;
+    }
+
     return days;
+  } catch (e) {
+    throw Exception('⚠️ خطا در دریافت روزهای هفته: ${e.toString()}');
   }
 });
 
@@ -28,15 +31,19 @@ final toggleDayStatusProvider = StateProvider.family<bool, int>((ref, id) {
 
 // متد برای تغییر وضعیت روز
 Future<void> toggleDayStatus(WidgetRef ref, int id, bool value) async {
-  final isar = await ref.watch(isarProvider.future);
-  final days = ref.read(weekDaysProvider).asData?.value ?? [];
-  final index = days.indexWhere((day) => day.id == id);
-  if (index == -1) return;
+  try {
+    final isar = await ref.watch(isarProvider.future);
+    final days = ref.read(weekDaysProvider).asData?.value ?? [];
 
-  final updatedDay = days[index].copyWith(isActive: value);
-  await isar.writeTxn(() async {
-    await isar.weekDays.put(updatedDay);
-  });
+    final index = days.indexWhere((day) => day.id == id);
+    if (index == -1) return;
 
-  ref.read(toggleDayStatusProvider(id).notifier).state = value;
+    final updatedDay = days[index].copyWith(isActive: value);
+    await isar.writeTxn(() => isar.weekDays.put(updatedDay));
+
+    // Update the state in Riverpod
+    ref.read(toggleDayStatusProvider(id).notifier).state = value;
+  } catch (e) {
+    throw Exception('⚠️ خطا در تغییر وضعیت روز: ${e.toString()}');
+  }
 }

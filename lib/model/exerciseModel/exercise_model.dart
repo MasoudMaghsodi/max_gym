@@ -7,15 +7,37 @@ part 'exercise_model.g.dart';
 class Exercise {
   Id id = Isar.autoIncrement;
 
-  @Index()
-  late String name;
+  @Index(type: IndexType.value)
+  late String name; // نام تمرین
 
-  final muscleGroup =
-      IsarLink<MuscleGroup>(); // استفاده از IsarLink برای عضله هدف
+  final muscleGroup = IsarLink<MuscleGroup>(); // لینک به عضله هدف
 
-  // افزودن زمان ایجاد برای پیگیری
-  @Index()
-  DateTime createdAt = DateTime.now();
+  @Index(type: IndexType.value)
+  DateTime createdAt = DateTime.now(); // زمان ایجاد برای پیگیری
+
+  // CopyWith Method for Immutability
+  Exercise copyWith({
+    Id? id,
+    String? name,
+    MuscleGroup? muscleGroup,
+    DateTime? createdAt,
+  }) {
+    return Exercise()
+      ..id = id ?? this.id
+      ..name = name ?? this.name
+      ..createdAt = createdAt ?? this.createdAt;
+  }
+
+  @override
+  String toString() {
+    return '''
+Exercise:
+  id: $id
+  name: $name
+  muscleGroup: ${muscleGroup.value?.name ?? 'Not Linked'}
+  createdAt: $createdAt
+''';
+  }
 }
 
 // داده‌های پیشفرض اولیه

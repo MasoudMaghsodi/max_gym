@@ -1,12 +1,12 @@
 import 'package:isar/isar.dart';
-
 part 'athlete_model.g.dart';
 
 enum Gender { male, female }
 
 @Collection()
 class Athlete {
-  Id id = Isar.autoIncrement;
+  Id id = Isar.autoIncrement; // Auto-incrementing ID
+
   late String firstName;
   late String lastName;
   late int age;
@@ -19,6 +19,7 @@ class Athlete {
   String? goal;
   String? coachNotes;
 
+  // CopyWith Method for Immutability
   Athlete copyWith({
     Id? id,
     String? firstName,

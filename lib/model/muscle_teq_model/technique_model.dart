@@ -4,8 +4,34 @@ part 'technique_model.g.dart';
 @Collection()
 class Technique {
   Id id = Isar.autoIncrement;
+
+  @Index(type: IndexType.value)
   late String name;
+
+  @Index(type: IndexType.value)
   late String nameEnglish;
+
+  // CopyWith Method for Immutability
+  Technique copyWith({
+    Id? id,
+    String? name,
+    String? nameEnglish,
+  }) {
+    return Technique()
+      ..id = id ?? this.id
+      ..name = name ?? this.name
+      ..nameEnglish = nameEnglish ?? this.nameEnglish;
+  }
+
+  @override
+  String toString() {
+    return '''
+Technique:
+  id: $id
+  name: $name
+  nameEnglish: $nameEnglish
+''';
+  }
 }
 
 // داده‌های پیشفرض تکنیک‌ها

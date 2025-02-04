@@ -13,6 +13,7 @@ class AthleteCard extends ConsumerStatefulWidget {
   final VoidCallback onTap;
   final bool isSelected;
   final VoidCallback onSelect;
+  final VoidCallback onLongPress; // New: Add onLongPress callback
 
   const AthleteCard({
     super.key,
@@ -21,6 +22,7 @@ class AthleteCard extends ConsumerStatefulWidget {
     required this.onTap,
     required this.isSelected,
     required this.onSelect,
+    required this.onLongPress, // New: Add onLongPress parameter
   });
 
   @override
@@ -31,7 +33,8 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.onSelect,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress, // New: Add onLongPress here
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(
@@ -39,6 +42,7 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
             width: 2.0,
           ),
           borderRadius: BorderRadius.circular(12.r),
+          color: widget.isSelected ? Colors.blue.withOpacity(0.2) : null,
         ),
         child: Dismissible(
           key: Key(widget.athlete.id.toString()),
@@ -61,7 +65,7 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
                     color: Colors.black.withOpacity(0.3),
                     blurRadius: 8,
                     offset: Offset(0, 4.h),
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -69,9 +73,7 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
                   ListTile(
                     leading: Checkbox(
                       value: widget.isSelected,
-                      onChanged: (value) {
-                        widget.onSelect();
-                      },
+                      onChanged: (value) => widget.onSelect(),
                     ),
                     title: _buildTitle(),
                     trailing: IconButton(
@@ -93,9 +95,9 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
                                   ProfileView(athlete: widget.athlete),
                             ),
                           );
-
                           if (result ?? false) {
-                            widget.onDelete(); // رفرش لیست پس از ذخیره تغییرات
+                            widget
+                                .onDelete(); // Refresh the list after saving changes
                           }
                         },
                         child: const Text(
@@ -115,7 +117,8 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
                           //   context,
                           //   MaterialPageRoute(
                           //     builder: (context) => TrainingListPage(
-                          //         athleteId: widget.athlete.id),
+                          //       athleteId: widget.athlete.id,
+                          //     ),
                           //   ),
                           // );
                         },
@@ -138,31 +141,37 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
   List<Widget> _buildInfoRows() {
     return [
       InfoRow(
-          icon: Icons.cake_outlined,
-          title: 'سن',
-          value: '${widget.athlete.age} سال'),
+        icon: Icons.cake_outlined,
+        title: 'سن',
+        value: '${widget.athlete.age} سال',
+      ),
       InfoRow(
-          icon: Icons.height,
-          title: 'قد',
-          value: '${widget.athlete.height.toStringAsFixed(1)} متر'),
+        icon: Icons.height,
+        title: 'قد',
+        value: '${widget.athlete.height.toStringAsFixed(1)} متر',
+      ),
       InfoRow(
-          icon: Icons.monitor_weight_outlined,
-          title: 'وزن',
-          value: '${widget.athlete.weight.toStringAsFixed(1)} کیلوگرم'),
+        icon: Icons.monitor_weight_outlined,
+        title: 'وزن',
+        value: '${widget.athlete.weight.toStringAsFixed(1)} کیلوگرم',
+      ),
       InfoRow(
-          icon: Icons.transgender,
-          title: 'جنسیت',
-          value: widget.athlete.gender == Gender.male ? 'مرد' : 'زن'),
+        icon: Icons.transgender,
+        title: 'جنسیت',
+        value: widget.athlete.gender == Gender.male ? 'مرد' : 'زن',
+      ),
       if (widget.athlete.goal != null)
         InfoRow(
-            icon: Icons.flag_outlined,
-            title: 'هدف',
-            value: widget.athlete.goal!),
+          icon: Icons.flag_outlined,
+          title: 'هدف',
+          value: widget.athlete.goal!,
+        ),
       if (widget.athlete.coachNotes != null)
         InfoRow(
-            icon: Icons.comment_bank_outlined,
-            title: 'یادداشت مربی',
-            value: widget.athlete.coachNotes!),
+          icon: Icons.comment_bank_outlined,
+          title: 'یادداشت مربی',
+          value: widget.athlete.coachNotes!,
+        ),
     ];
   }
 
@@ -187,7 +196,7 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
               color: Colors.grey[100],
             ),
             overflow: TextOverflow.ellipsis,
-            maxLines: 1, // اضافه کردن محدودیت به یک خط
+            maxLines: 1,
           ),
         ),
       ],
@@ -238,17 +247,15 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
     final provider = ref.read(athleteProvider);
     if (provider != null) {
       await provider.deleteAthlete(widget.athlete.id);
-      widget.onDelete();
+      widget.onDelete(); // Notify the parent to refresh the UI
     }
   }
 
   Future<void> _duplicateAthlete() async {
     final provider = ref.read(athleteProvider);
     if (provider == null) return;
-
     final athletes = await provider.getAllAthletes();
     int copyCount = _calculateCopyCount(athletes);
-
     final newAthlete = Athlete()
       ..firstName = widget.athlete.firstName
       ..lastName = '${widget.athlete.lastName} ${copyCount + 1}'
@@ -258,15 +265,13 @@ class _AthleteCardState extends ConsumerState<AthleteCard> {
       ..gender = widget.athlete.gender
       ..goal = widget.athlete.goal
       ..coachNotes = widget.athlete.coachNotes;
-
     await provider.addAthlete(newAthlete);
-    widget.onDelete(); // Notify the parent to rebuild the UI
+    widget.onDelete(); // Notify the parent to refresh the UI
   }
 
   int _calculateCopyCount(List<Athlete> athletes) {
     int copyCount = 0;
     final baseName = '${widget.athlete.firstName} ${widget.athlete.lastName}';
-
     for (var a in athletes) {
       if (a.lastName.startsWith(baseName)) {
         final match = RegExp(r'(\d+)$').firstMatch(a.lastName);

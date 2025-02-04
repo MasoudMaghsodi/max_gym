@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../../../providers/athleteProviders/athlete_list_provider.dart';
 import '../../../view/homeScreen/home_content_view.dart';
 
@@ -24,7 +23,7 @@ class _HomeSearchBarState extends ConsumerState<HomeSearchBar> {
             color: Colors.black.withOpacity(0.3),
             blurRadius: 8,
             offset: Offset(0, 4.h),
-          )
+          ),
         ],
       ),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -45,7 +44,7 @@ class _HomeSearchBarState extends ConsumerState<HomeSearchBar> {
           ),
           IconButton(
             icon: Icon(Icons.select_all, color: Colors.blue[400], size: 28.sp),
-            onPressed: () => _selectAllAthletes(),
+            onPressed: _selectAllAthletes,
           ),
           IconButton(
             icon:
@@ -62,8 +61,10 @@ class _HomeSearchBarState extends ConsumerState<HomeSearchBar> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey[850],
-        title: Text('حذف ورزشکاران انتخاب شده',
-            style: TextStyle(color: Colors.red[300])),
+        title: Text(
+          'حذف ورزشکاران انتخاب شده',
+          style: TextStyle(color: Colors.red[300]),
+        ),
         content: Text(
           'آیا مطمئن هستید که می‌خواهید تمام ورزشکاران انتخاب شده را حذف کنید؟',
           style: TextStyle(color: Colors.grey[300]),
@@ -95,8 +96,7 @@ class _HomeSearchBarState extends ConsumerState<HomeSearchBar> {
       }
       ref.read(selectedAthletesProvider.notifier).state = [];
       ref.read(refreshTriggerProvider.notifier).state++;
-      ref.read(searchQueryProvider.notifier).state =
-          ''; // Reset the search query after deletion
+      ref.read(searchQueryProvider.notifier).state = ''; // Reset search query
     }
   }
 

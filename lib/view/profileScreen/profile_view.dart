@@ -3,15 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/model/athleteModel/athlete_model.dart';
 import 'package:max_gym/providers/athleteProviders/athlete_list_provider.dart';
-import 'package:max_gym/widgets/profileWidgets/profile_list_view.dart';
+import '../../widgets/profileWidgets/profile_list_view.dart';
 
 class ProfileView extends ConsumerWidget {
   final Athlete? athlete;
+
   const ProfileView({super.key, this.athlete});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileFormKey = GlobalKey<ProfileListViewState>();
+    // Define a typed GlobalKey for ProfileListViewState
+    final GlobalKey<ProfileListViewState> profileFormKey =
+        GlobalKey<ProfileListViewState>();
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: GestureDetector(
@@ -104,9 +108,7 @@ class ProfileView extends ConsumerWidget {
                     child: _buildSubmitButton(profileFormKey, ref, context),
                   ),
                   SizedBox(width: 16.w),
-                  Expanded(
-                    child: _buildResetButton(profileFormKey),
-                  ),
+                  Expanded(child: _buildResetButton(profileFormKey)),
                 ],
               ),
             if (athlete != null)
@@ -163,7 +165,8 @@ class ProfileView extends ConsumerWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r)),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
             padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 28.w),
           ),
           child: Text(
@@ -176,7 +179,8 @@ class ProfileView extends ConsumerWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r)),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
             padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 28.w),
           ),
           child: Text(
@@ -193,7 +197,9 @@ class ProfileView extends ConsumerWidget {
     FocusManager.instance.primaryFocus?.unfocus();
     await Future.delayed(const Duration(milliseconds: 100));
 
+    // Validate the form
     if (profileFormKey.currentState?.validateForm() ?? false) {
+      // Collect form data
       final profileData = profileFormKey.currentState?.collectFormData();
       if (profileData != null) {
         _showConfirmationDialog(context, profileData, ref, profileFormKey);
@@ -206,7 +212,9 @@ class ProfileView extends ConsumerWidget {
     FocusManager.instance.primaryFocus?.unfocus();
     await Future.delayed(const Duration(milliseconds: 100));
 
+    // Validate the form
     if (profileFormKey.currentState?.validateForm() ?? false) {
+      // Collect form data
       final profileData = profileFormKey.currentState?.collectFormData();
       if (profileData != null) {
         final updatedAthlete = Athlete()
@@ -224,11 +232,9 @@ class ProfileView extends ConsumerWidget {
         final controller = ref.read(athleteProvider);
         if (controller != null) {
           await controller.updateAthlete(updatedAthlete);
-
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('اطلاعات با موفقیت به‌روزرسانی شد')),
           );
-
           Navigator.pop(context);
         }
       }
@@ -237,7 +243,7 @@ class ProfileView extends ConsumerWidget {
 
   void _showConfirmationDialog(
     BuildContext context,
-    Map<String, String> profileData,
+    Map profileData,
     WidgetRef ref,
     GlobalKey<ProfileListViewState> profileFormKey,
   ) {
@@ -272,13 +278,9 @@ class ProfileView extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () async {
-                // بستن دیالوگ
                 Navigator.of(context).pop();
-
-                // با استفاده از Future.delayed برای اطمینان از اتمام بسته شدن دیالوگ
                 await Future.delayed(const Duration(milliseconds: 100));
 
-                // ایجاد شیء Athlete
                 final newAthlete = Athlete()
                   ..firstName = profileData['firstName']!
                   ..lastName = profileData['lastName']!
@@ -291,14 +293,10 @@ class ProfileView extends ConsumerWidget {
                   ..goal = profileData['goal']
                   ..coachNotes = profileData['coachNotes'];
 
-                // ذخیره اطلاعات
                 final controller = ref.read(athleteProvider);
                 if (controller != null) {
                   try {
-                    // ذخیره ورزشکار جدید
                     await controller.addAthlete(newAthlete);
-
-                    // نمایش پیام موفقیت
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -307,23 +305,19 @@ class ProfileView extends ConsumerWidget {
                         ),
                       );
                     }
-
-                    // ریست فرم
                     profileFormKey.currentState?.resetForm();
                   } catch (e) {
-                    // نمایش خطا در صورت عدم موفقیت
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content:
                               Text('⚠️ خطا در ذخیره‌سازی: ${e.toString()}'),
-                          duration: Duration(seconds: 3),
+                          duration: const Duration(seconds: 3),
                         ),
                       );
                     }
                   }
                 } else {
-                  // نمایش خطا در صورت عدم وجود کنترلر
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

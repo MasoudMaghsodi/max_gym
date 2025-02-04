@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:max_gym/view/exerciseScreen/workout_view.dart.dart';
 import 'package:max_gym/view/profileScreen/profile_view.dart';
 import '../../controller/homeController/btm_controller.dart';
 import '../../widgets/homeWidgets/homeView/btm_bar_widget.dart';
+import '../exerciseScreen/workout_view.dart.dart';
 import 'home_content_view.dart';
 
 class HomeView extends ConsumerWidget {
@@ -11,20 +11,21 @@ class HomeView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the current index from the bottom navigation bar provider
     final currentIndex = ref.watch(bottomNavBarProvider);
 
-    // لیست صفحات
+    // List of pages corresponding to each tab
     final List<Widget> pages = [
-      const HomeContent(), // صفحه اصلی (خود همین صفحه)
-      const ProfileView(), // صفحه پروفایل
-      const WorkoutPage(), // صفحه پروفایل
+      const HomeContent(), // Main home page
+      const ProfileView(), // Athlete profile page
+      const WorkoutPage(), // Weekly workout page
     ];
 
-    // عنوان‌های مربوط به هر صفحه
+    // Titles for each page
     final List<String> titles = [
-      'باشگاه مکس', // عنوان صفحه اصلی
-      'پروفایل ورزشکار', // عنوان صفحه پروفایل
-      'تمرینات هفتگی', // عنوان صفحه پروفایل
+      'باشگاه مکس', // Title for the main home page
+      'پروفایل ورزشکار', // Title for the athlete profile page
+      'تمرینات هفتگی', // Title for the weekly workout page
     ];
 
     return Scaffold(
@@ -40,7 +41,7 @@ class HomeView extends ConsumerWidget {
             opacity: 0.5,
           ),
         ),
-        child: pages[currentIndex], // نمایش صفحه فعلی
+        child: pages[currentIndex], // Display the current page
       ),
       bottomNavigationBar: const CustomBottomNavBar(),
     );

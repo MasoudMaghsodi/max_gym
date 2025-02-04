@@ -28,15 +28,25 @@ const WeekDaySchema = CollectionSchema(
       name: r'isActive',
       type: IsarType.bool,
     ),
-    r'persianName': PropertySchema(
+    r'isValid': PropertySchema(
       id: 2,
+      name: r'isValid',
+      type: IsarType.bool,
+    ),
+    r'persianName': PropertySchema(
+      id: 3,
       name: r'persianName',
       type: IsarType.string,
     ),
     r'targetMuscleGroups': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'targetMuscleGroups',
       type: IsarType.stringList,
+    ),
+    r'validationError': PropertySchema(
+      id: 5,
+      name: r'validationError',
+      type: IsarType.string,
     )
   },
   estimateSize: _weekDayEstimateSize,
@@ -44,7 +54,21 @@ const WeekDaySchema = CollectionSchema(
   deserialize: _weekDayDeserialize,
   deserializeProp: _weekDayDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'targetMuscleGroups': IndexSchema(
+      id: 7069229838141959950,
+      name: r'targetMuscleGroups',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'targetMuscleGroups',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _weekDayGetId,
@@ -68,6 +92,12 @@ int _weekDayEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  {
+    final value = object.validationError;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -79,8 +109,10 @@ void _weekDaySerialize(
 ) {
   writer.writeString(offsets[0], object.day.name);
   writer.writeBool(offsets[1], object.isActive);
-  writer.writeString(offsets[2], object.persianName);
-  writer.writeStringList(offsets[3], object.targetMuscleGroups);
+  writer.writeBool(offsets[2], object.isValid);
+  writer.writeString(offsets[3], object.persianName);
+  writer.writeStringList(offsets[4], object.targetMuscleGroups);
+  writer.writeString(offsets[5], object.validationError);
 }
 
 WeekDay _weekDayDeserialize(
@@ -94,7 +126,7 @@ WeekDay _weekDayDeserialize(
       Day.saturday;
   object.id = id;
   object.isActive = reader.readBool(offsets[1]);
-  object.targetMuscleGroups = reader.readStringList(offsets[3]) ?? [];
+  object.targetMuscleGroups = reader.readStringList(offsets[4]) ?? [];
   return object;
 }
 
@@ -111,9 +143,13 @@ P _weekDayDeserializeProp<P>(
     case 1:
       return (reader.readBool(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
+      return (reader.readString(offset)) as P;
+    case 4:
       return (reader.readStringList(offset) ?? []) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -221,6 +257,51 @@ extension WeekDayQueryWhere on QueryBuilder<WeekDay, WeekDay, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterWhereClause> targetMuscleGroupsEqualTo(
+      List<String> targetMuscleGroups) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'targetMuscleGroups',
+        value: [targetMuscleGroups],
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterWhereClause>
+      targetMuscleGroupsNotEqualTo(List<String> targetMuscleGroups) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'targetMuscleGroups',
+              lower: [],
+              upper: [targetMuscleGroups],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'targetMuscleGroups',
+              lower: [targetMuscleGroups],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'targetMuscleGroups',
+              lower: [targetMuscleGroups],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'targetMuscleGroups',
+              lower: [],
+              upper: [targetMuscleGroups],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -414,6 +495,16 @@ extension WeekDayQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isActive',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> isValidEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isValid',
         value: value,
       ));
     });
@@ -776,6 +867,158 @@ extension WeekDayQueryFilter
       );
     });
   }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition>
+      validationErrorIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'validationError',
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition>
+      validationErrorIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'validationError',
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> validationErrorEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'validationError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition>
+      validationErrorGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'validationError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> validationErrorLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'validationError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> validationErrorBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'validationError',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition>
+      validationErrorStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'validationError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> validationErrorEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'validationError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> validationErrorContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'validationError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition> validationErrorMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'validationError',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition>
+      validationErrorIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'validationError',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterFilterCondition>
+      validationErrorIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'validationError',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension WeekDayQueryObject
@@ -809,6 +1052,18 @@ extension WeekDayQuerySortBy on QueryBuilder<WeekDay, WeekDay, QSortBy> {
     });
   }
 
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> sortByIsValid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> sortByIsValidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.desc);
+    });
+  }
+
   QueryBuilder<WeekDay, WeekDay, QAfterSortBy> sortByPersianName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'persianName', Sort.asc);
@@ -818,6 +1073,18 @@ extension WeekDayQuerySortBy on QueryBuilder<WeekDay, WeekDay, QSortBy> {
   QueryBuilder<WeekDay, WeekDay, QAfterSortBy> sortByPersianNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'persianName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> sortByValidationError() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'validationError', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> sortByValidationErrorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'validationError', Sort.desc);
     });
   }
 }
@@ -860,6 +1127,18 @@ extension WeekDayQuerySortThenBy
     });
   }
 
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> thenByIsValid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> thenByIsValidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isValid', Sort.desc);
+    });
+  }
+
   QueryBuilder<WeekDay, WeekDay, QAfterSortBy> thenByPersianName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'persianName', Sort.asc);
@@ -869,6 +1148,18 @@ extension WeekDayQuerySortThenBy
   QueryBuilder<WeekDay, WeekDay, QAfterSortBy> thenByPersianNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'persianName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> thenByValidationError() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'validationError', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QAfterSortBy> thenByValidationErrorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'validationError', Sort.desc);
     });
   }
 }
@@ -888,6 +1179,12 @@ extension WeekDayQueryWhereDistinct
     });
   }
 
+  QueryBuilder<WeekDay, WeekDay, QDistinct> distinctByIsValid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isValid');
+    });
+  }
+
   QueryBuilder<WeekDay, WeekDay, QDistinct> distinctByPersianName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -898,6 +1195,14 @@ extension WeekDayQueryWhereDistinct
   QueryBuilder<WeekDay, WeekDay, QDistinct> distinctByTargetMuscleGroups() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'targetMuscleGroups');
+    });
+  }
+
+  QueryBuilder<WeekDay, WeekDay, QDistinct> distinctByValidationError(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'validationError',
+          caseSensitive: caseSensitive);
     });
   }
 }
@@ -922,6 +1227,12 @@ extension WeekDayQueryProperty
     });
   }
 
+  QueryBuilder<WeekDay, bool, QQueryOperations> isValidProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isValid');
+    });
+  }
+
   QueryBuilder<WeekDay, String, QQueryOperations> persianNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'persianName');
@@ -932,6 +1243,12 @@ extension WeekDayQueryProperty
       targetMuscleGroupsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'targetMuscleGroups');
+    });
+  }
+
+  QueryBuilder<WeekDay, String?, QQueryOperations> validationErrorProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'validationError');
     });
   }
 }

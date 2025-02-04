@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../controller/homeController/btm_controller.dart';
 
 class CustomBottomNavBar extends ConsumerWidget {
@@ -14,14 +13,14 @@ class CustomBottomNavBar extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -40,6 +39,7 @@ class CustomBottomNavBar extends ConsumerWidget {
           showUnselectedLabels: true,
           selectedFontSize: 14.sp,
           unselectedFontSize: 12.sp,
+          type: BottomNavigationBarType.fixed, // Ensures consistent layout
           items: [
             _buildBottomNavigationBarItem(
               icon: Icons.home,

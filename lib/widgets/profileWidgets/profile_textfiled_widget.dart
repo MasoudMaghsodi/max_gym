@@ -54,10 +54,8 @@ class ProfileTextFieldWidget extends StatelessWidget {
             prefixIcon: Icon(icon, color: iconColor),
             filled: true,
             fillColor: Colors.white.withAlpha(204),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 20,
-            ),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           ),
           inputFormatters: inputFormatters ??
               [
@@ -77,7 +75,8 @@ class ProfileTextFieldWidget extends StatelessWidget {
             if (isRequired && (value == null || value.isEmpty)) {
               return requiredErrorText;
             }
-            if (value!.isNotEmpty &&
+            if (value != null &&
+                value.isNotEmpty &&
                 !RegExp(r'^[\u0600-\u06FF\s]+$').hasMatch(value)) {
               return patternErrorText;
             }

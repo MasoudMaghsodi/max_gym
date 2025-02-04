@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/model/athleteModel/athlete_model.dart';
-
 import 'profile_drapdown_widget.dart';
 import 'profile_num_widget.dart';
 import 'profile_textfiled_widget.dart';
 
 class ProfileListView extends ConsumerStatefulWidget {
   final Athlete? athlete;
+
   const ProfileListView({super.key, this.athlete});
 
   @override
@@ -17,6 +17,11 @@ class ProfileListView extends ConsumerStatefulWidget {
 
 class ProfileListViewState extends ConsumerState<ProfileListView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  // Use the public state class name for the GlobalKey
+  final GlobalKey<ProfileDropdownWidgetState> _genderDropdownKey =
+      GlobalKey<ProfileDropdownWidgetState>();
+
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _ageController;
@@ -24,11 +29,16 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
   late TextEditingController _weightController;
   late TextEditingController _goalController;
   late TextEditingController _coachNotesController;
+
   String? _selectedGender;
 
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
     _firstNameController =
         TextEditingController(text: widget.athlete?.firstName ?? '');
     _lastNameController =
@@ -47,6 +57,11 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
 
   @override
   void dispose() {
+    _disposeControllers();
+    super.dispose();
+  }
+
+  void _disposeControllers() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _ageController.dispose();
@@ -54,35 +69,31 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
     _weightController.dispose();
     _goalController.dispose();
     _coachNotesController.dispose();
-    super.dispose();
   }
 
   void resetForm() {
     _formKey.currentState?.reset();
-    _firstNameController.clear();
-    _lastNameController.clear();
-    _ageController.clear();
-    _heightController.clear();
-    _weightController.clear();
-    _goalController.clear();
-    _coachNotesController.clear();
+    _disposeControllers();
+    _initializeControllers();
     setState(() {
-      _selectedGender = null;
+      _selectedGender = null; // Reset the selected gender
     });
+    // Reset the gender dropdown
+    _genderDropdownKey.currentState?.resetDropdown();
   }
 
   bool validateForm() {
     return _formKey.currentState?.validate() ?? false;
   }
 
-  Map<String, String> collectFormData() {
+  Map<String, String?> collectFormData() {
     return {
       'firstName': _firstNameController.text,
       'lastName': _lastNameController.text,
       'age': _ageController.text,
       'height': _heightController.text,
       'weight': _weightController.text,
-      'gender': _selectedGender ?? '',
+      'gender': _selectedGender, // Include the selected gender
       'goal': _goalController.text,
       'coachNotes': _coachNotesController.text,
     };
@@ -127,7 +138,6 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
             label: "قد",
             icon: Icons.height_sharp,
             iconColor: Colors.orange,
-            // decimal: true,
             validator: (value) => _validateNumericField(value, 'قد'),
           ),
           SizedBox(height: 16.h),
@@ -136,11 +146,11 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
             label: "وزن",
             icon: Icons.scale_sharp,
             iconColor: Colors.red,
-            // decimal: true,
             validator: (value) => _validateNumericField(value, 'وزن'),
           ),
           SizedBox(height: 16.h),
           ProfileDropdownWidget(
+            key: _genderDropdownKey, // Assign the GlobalKey
             label: "جنسیت",
             icon: Icons.person,
             items: const ["مرد", "زن"],
@@ -149,7 +159,7 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
             selectedItem: _selectedGender,
             color: Colors.blueAccent,
             validator: (value) =>
-                value == null ? 'لطفا جنسیت را انتخاب کنید' : null,
+                value == null ? 'لطفا جنسیت را انتخاب کنید' : ' ',
           ),
           SizedBox(height: 16.h),
           ProfileTextFieldWidget(
@@ -182,7 +192,6 @@ class ProfileListViewState extends ConsumerState<ProfileListView> {
   String? _validateNumericField(String? value, String fieldName) {
     final error = _validateRequiredField(value, fieldName);
     if (error != null) return error;
-
     final number = double.tryParse(value!);
     if (number == null || number <= 0) {
       return 'مقدار $fieldName نامعتبر است';

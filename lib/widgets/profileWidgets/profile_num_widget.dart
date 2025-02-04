@@ -37,7 +37,7 @@ class ProfileNumWidget extends StatelessWidget {
             fillColor: Colors.white.withAlpha(204),
           ),
           keyboardType: TextInputType.number,
-          inputFormatters: <TextInputFormatter>[
+          inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
           ],
           validator: (value) {
@@ -47,7 +47,9 @@ class ProfileNumWidget extends StatelessWidget {
             if (required && (value == null || value.isEmpty)) {
               return 'لطفاً $label خود را وارد کنید';
             }
-            if (!RegExp(r'^\d+$').hasMatch(value!)) {
+            if (value != null &&
+                value.isNotEmpty &&
+                !RegExp(r'^\d+$').hasMatch(value)) {
               return 'لطفاً فقط عدد وارد کنید';
             }
             return null;
