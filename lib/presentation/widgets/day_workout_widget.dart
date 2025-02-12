@@ -18,7 +18,7 @@ class DayWorkoutCard extends StatelessWidget {
         if (dayPlan.isRestDay)
           const ListTile(title: Text('روز استراحت'))
         else
-          ...dayPlan.workoutCards
+          ...dayPlan.exercises
               .map((card) => WorkoutCardItem(card: card))
               .toList(),
         ElevatedButton(
@@ -30,7 +30,7 @@ class DayWorkoutCard extends StatelessWidget {
 }
 
 class WorkoutCardItem extends StatelessWidget {
-  final WorkoutCard card;
+  final WorkoutExercise card;
 
   const WorkoutCardItem({required this.card, super.key});
 
@@ -56,7 +56,7 @@ class WorkoutCardItem extends StatelessWidget {
     );
   }
 
-  void _editWorkoutCard(BuildContext context, WorkoutCard card) {
+  void _editWorkoutCard(BuildContext context, WorkoutExercise card) {
     // منطق ویرایش کارت تمرین
   }
 }

@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/isar_service.dart';
+import '../../services/isar_service.dart';
 import '../../data/datasources/local_datasource.dart';
 import '../../data/datasources/remote_datasource.dart';
 import '../../data/models/athlete_model.dart';
 import '../../data/models/workout_model.dart';
 import '../../data/repositories/athlete_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../services/connectivity_service.dart';
 
 // ##########################################################
 // Providers اصلی
@@ -42,6 +43,10 @@ final remoteDataSourceProvider = Provider<RemoteDataSource>((ref) {
   return RemoteDataSource(supabase);
 });
 
+final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
+  return ConnectivityService();
+});
+
 // ##########################################################
 // Providers مخازن داده
 // ##########################################################
@@ -51,6 +56,8 @@ final athleteRepositoryProvider = Provider<AthleteRepository>((ref) {
   return AthleteRepository(
     localDataSource: ref.watch(localDataSourceProvider),
     remoteDataSource: ref.watch(remoteDataSourceProvider),
+    connectivityService: ref
+        .watch(connectivityServiceProvider), // اضافه کردن ConnectivityService
   );
 });
 
@@ -90,3 +97,9 @@ final athletesProvider = FutureProvider.autoDispose<List<Athlete>>((ref) async {
     loading: () => throw Exception('در حال بارگذاری...'),
   );
 });
+
+// Provider برای مدیریت جستجو
+final searchQueryProvider = StateProvider<String>((ref) => '');
+
+// Provider برای مدیریت فیلتر جنسیت
+final filterProvider = StateProvider<String?>((ref) => null);

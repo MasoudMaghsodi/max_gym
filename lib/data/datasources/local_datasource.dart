@@ -8,6 +8,33 @@ class LocalDataSource {
 
   LocalDataSource(this.isar);
 
+  Future<List<Athlete>> getUnsyncedAthletes() async {
+    try {
+      return await isar.athletes
+          .where()
+          .filter()
+          .isSyncedEqualTo(false)
+          .findAll();
+    } catch (e, stackTrace) {
+      throw Exception('خطا در دریافت ورزشکارهای سینک نشده: $e\n$stackTrace');
+    }
+  }
+
+  Future<void> markAthleteAsSynced(int id) async {
+    try {
+      await isar.writeTxn(() async {
+        final athlete = await isar.athletes.get(id);
+        if (athlete != null) {
+          athlete.isSynced = true;
+          await isar.athletes.put(athlete);
+        }
+      });
+    } catch (e, stackTrace) {
+      throw Exception(
+          'خطا در علامت‌گذاری ورزشکار به عنوان سینک شده: $e\n$stackTrace');
+    }
+  }
+
   // ورزشکاران
   Future<List<Athlete>> getAllAthletes() async {
     try {

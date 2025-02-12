@@ -9,16 +9,16 @@ import '../data/models/workout_model.dart';
 class IsarService {
   static late Isar isar;
 
-  /// مقداردهی اولیه پایگاه داده
-  static Future<void> init() async {
+  static Future<Isar> init() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
       isar = await Isar.open(
         [AthleteSchema, WorkoutPlanSchema],
         directory: dir.path,
-        inspector: true, // فعالسازی Inspector فقط برای محیط توسعه
+        inspector: true,
       );
       debugPrint('✅ Isar Database Initialized!');
+      return isar; // برگردوندن Isar
     } catch (e, stackTrace) {
       debugPrint('❌ خطا در مقداردهی Isar: $e');
       debugPrint(stackTrace.toString());

@@ -50,6 +50,7 @@ class AthleteEntity {
       gender: gender,
       goal: goal,
       coachNote: coachNote,
+      id: id,
     );
   }
 

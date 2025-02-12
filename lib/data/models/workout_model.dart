@@ -10,13 +10,13 @@ class WorkoutPlan {
 
   String day; // روز هفته (مثلاً دوشنبه)
   bool isRestDay; // آیا روز استراحته؟
-  List<WorkoutCard> workoutCards = []; // لیست تمرینات
-
+  final List<WorkoutExercise> exercises; // لیست تمرینات
   WorkoutPlan({
+    required this.id,
     required this.athleteId,
     required this.day,
     required this.isRestDay,
-    required this.workoutCards,
+    required this.exercises,
   });
 
   /// تبدیل مدل به Map برای سازگاری با Supabase
@@ -26,32 +26,33 @@ class WorkoutPlan {
       'athleteId': athleteId,
       'day': day,
       'isRestDay': isRestDay,
-      'workoutCards': workoutCards.map((card) => card.toMap()).toList(),
+      'exercises': exercises.map((card) => card.toMap()).toList(),
     };
   }
 
   /// ایجاد مدل از Map (برای Supabase)
   factory WorkoutPlan.fromMap(Map<String, dynamic> map) {
     return WorkoutPlan(
+      id: map['id'],
       athleteId: map['athleteId'],
       day: map['day'],
       isRestDay: map['isRestDay'],
-      workoutCards: (map['workoutCards'] as List)
-          .map((card) => WorkoutCard.fromMap(card))
+      exercises: (map['WorkoutExercises'] as List)
+          .map((card) => WorkoutExercise.fromMap(card))
           .toList(),
     );
   }
 }
 
 @embedded
-class WorkoutCard {
+class WorkoutExercise {
   String? exerciseName; // نام تمرین
   int? sets; // تعداد ست‌ها
   int? reps; // تعداد تکرارها
   String? technique; // تکنیک (مثلاً سوپرست)
   List<Superset>? supersets = []; // لیست سوپرست‌ها
 
-  WorkoutCard({
+  WorkoutExercise({
     this.exerciseName,
     this.sets,
     this.reps,
@@ -69,8 +70,8 @@ class WorkoutCard {
     };
   }
 
-  factory WorkoutCard.fromMap(Map<String, dynamic> map) {
-    return WorkoutCard(
+  factory WorkoutExercise.fromMap(Map<String, dynamic> map) {
+    return WorkoutExercise(
       exerciseName: map['exerciseName'],
       sets: map['sets'],
       reps: map['reps'],

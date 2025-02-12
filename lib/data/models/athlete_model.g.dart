@@ -47,13 +47,18 @@ const AthleteSchema = CollectionSchema(
       name: r'height',
       type: IsarType.double,
     ),
-    r'lastName': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 6,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'lastName': PropertySchema(
+      id: 7,
       name: r'lastName',
       type: IsarType.string,
     ),
     r'weight': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'weight',
       type: IsarType.double,
     )
@@ -125,8 +130,9 @@ void _athleteSerialize(
   writer.writeString(offsets[3], object.gender);
   writer.writeString(offsets[4], object.goal);
   writer.writeDouble(offsets[5], object.height);
-  writer.writeString(offsets[6], object.lastName);
-  writer.writeDouble(offsets[7], object.weight);
+  writer.writeBool(offsets[6], object.isSynced);
+  writer.writeString(offsets[7], object.lastName);
+  writer.writeDouble(offsets[8], object.weight);
 }
 
 Athlete _athleteDeserialize(
@@ -142,10 +148,11 @@ Athlete _athleteDeserialize(
     gender: reader.readString(offsets[3]),
     goal: reader.readString(offsets[4]),
     height: reader.readDouble(offsets[5]),
-    lastName: reader.readString(offsets[6]),
-    weight: reader.readDouble(offsets[7]),
+    id: id,
+    lastName: reader.readString(offsets[7]),
+    weight: reader.readDouble(offsets[8]),
   );
-  object.id = id;
+  object.isSynced = reader.readBool(offsets[6]);
   return object;
 }
 
@@ -169,8 +176,10 @@ P _athleteDeserializeProp<P>(
     case 5:
       return (reader.readDouble(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1240,6 +1249,16 @@ extension AthleteQueryFilter
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> isSyncedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> lastNameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1512,6 +1531,18 @@ extension AthleteQuerySortBy on QueryBuilder<Athlete, Athlete, QSortBy> {
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterSortBy> sortByLastName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastName', Sort.asc);
@@ -1623,6 +1654,18 @@ extension AthleteQuerySortThenBy
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterSortBy> thenByLastName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastName', Sort.asc);
@@ -1690,6 +1733,12 @@ extension AthleteQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QDistinct> distinctByLastName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1745,6 +1794,12 @@ extension AthleteQueryProperty
   QueryBuilder<Athlete, double, QQueryOperations> heightProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'height');
+    });
+  }
+
+  QueryBuilder<Athlete, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
     });
   }
 

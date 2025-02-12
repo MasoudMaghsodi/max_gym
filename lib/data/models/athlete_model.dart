@@ -9,15 +9,16 @@ class Athlete {
   String firstName; // نام
   @Index(type: IndexType.value)
   String lastName; // نام خانوادگی
-
   int age; // سن
   double height; // قد (سانتی‌متر)
   double weight; // وزن (کیلوگرم)
   String gender; // جنسیت (مثلاً مرد/زن)
   String goal; // هدف (مثلاً کاهش وزن، عضله‌سازی)
   String coachNote; // یادداشت مربی
+  bool isSynced = false;
 
   Athlete({
+    required this.id,
     required this.firstName,
     required this.lastName,
     required this.age,
@@ -41,7 +42,7 @@ class Athlete {
     String? coachNote,
   }) {
     return Athlete(
-      // id: id ?? this.id,
+      id: id ?? this.id,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       age: age ?? this.age,
@@ -71,6 +72,7 @@ class Athlete {
   /// ایجاد مدل از Map (برای Supabase)
   factory Athlete.fromMap(Map<String, dynamic> map) {
     return Athlete(
+      id: map['id'],
       firstName: map['first_name'],
       lastName: map['last_name'],
       age: map['age'],
