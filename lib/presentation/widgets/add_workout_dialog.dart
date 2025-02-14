@@ -4,8 +4,15 @@ import '../../data/models/workout_model.dart';
 
 class AddWorkoutDialog extends StatefulWidget {
   final Function(WorkoutPlan) onSave;
+  final int athleteId;
+  final String day;
 
-  const AddWorkoutDialog({required this.onSave, super.key});
+  const AddWorkoutDialog({
+    required this.onSave,
+    required this.athleteId,
+    required this.day,
+    super.key,
+  });
 
   @override
   State<AddWorkoutDialog> createState() => _AddWorkoutDialogState();
@@ -24,38 +31,67 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
       padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _exerciseNameController,
-              decoration: const InputDecoration(labelText: 'نام تمرین'),
-              validator: (value) =>
-                  value!.isEmpty ? 'لطفاً نام تمرین را وارد کنید' : null,
-            ),
-            TextFormField(
-              controller: _setsController,
-              decoration: const InputDecoration(labelText: 'تعداد ست‌ها'),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value!.isEmpty ? 'لطفاً تعداد ست‌ها را وارد کنید' : null,
-            ),
-            TextFormField(
-              controller: _repsController,
-              decoration: const InputDecoration(labelText: 'تعداد تکرارها'),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value!.isEmpty ? 'لطفاً تعداد تکرارها را وارد کنید' : null,
-            ),
-            TextFormField(
-              controller: _techniqueController,
-              decoration: const InputDecoration(labelText: 'تکنیک'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveWorkout,
-              child: const Text('ذخیره'),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'افزودن تمرین به ${widget.day}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _exerciseNameController,
+                decoration: const InputDecoration(
+                  labelText: 'نام تمرین',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value!.isEmpty ? 'لطفاً نام تمرین را وارد کنید' : null,
+              ),
+              const SizedBox(height: 15),
+              TextFormField(
+                controller: _setsController,
+                decoration: const InputDecoration(
+                  labelText: 'تعداد ست‌ها',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) =>
+                    value!.isEmpty ? 'لطفاً تعداد ست‌ها را وارد کنید' : null,
+              ),
+              const SizedBox(height: 15),
+              TextFormField(
+                controller: _repsController,
+                decoration: const InputDecoration(
+                  labelText: 'تعداد تکرارها',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) =>
+                    value!.isEmpty ? 'لطفاً تعداد تکرارها را وارد کنید' : null,
+              ),
+              const SizedBox(height: 15),
+              TextFormField(
+                controller: _techniqueController,
+                decoration: const InputDecoration(
+                  labelText: 'تکنیک (اختیاری)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 25),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                onPressed: _saveWorkout,
+                child: const Text('ذخیره تمرین'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -65,15 +101,17 @@ class _AddWorkoutDialogState extends State<AddWorkoutDialog> {
     if (_formKey.currentState!.validate()) {
       final workout = WorkoutPlan(
         id: Isar.autoIncrement,
-        athleteId: 1, // باید از صفحه اصلی دریافت شود
-        day: 'شنبه', // باید از تب‌ها دریافت شود
+        athleteId: widget.athleteId, // استفاده از athleteId دریافتی
+        day: widget.day, // استفاده از day دریافتی
         isRestDay: false,
         exercises: [
           WorkoutExercise(
             exerciseName: _exerciseNameController.text,
             sets: int.tryParse(_setsController.text),
             reps: int.tryParse(_repsController.text),
-            technique: _techniqueController.text,
+            technique: _techniqueController.text.isNotEmpty
+                ? _techniqueController.text
+                : null,
           ),
         ],
       );

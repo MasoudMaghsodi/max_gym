@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../core/constants/app_colors.dart';
 import '../providers/providers.dart';
 import 'athlete_list_item_widget.dart';
 
 class AthleteSearch extends SearchDelegate<String> {
   final WidgetRef ref;
-  final FocusNode _searchFocusNode = FocusNode(); // اضافه کردن FocusNode
+  final FocusNode _searchFocusNode = FocusNode();
 
   AthleteSearch(this.ref);
 
   @override
   void dispose() {
-    _searchFocusNode.dispose(); // آزاد کردن FocusNode
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -23,10 +22,12 @@ class AthleteSearch extends SearchDelegate<String> {
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         elevation: 4,
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-        border: InputBorder.none,
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
       ),
     );
   }
@@ -34,16 +35,17 @@ class AthleteSearch extends SearchDelegate<String> {
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
-      AnimatedOpacity(
-        opacity: query.isNotEmpty ? 1.0 : 0.0,
+      AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        child: IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () {
-            query = '';
-            _searchFocusNode.unfocus(); // برداشتن فوکوس از TextField
-          },
-        ),
+        child: query.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, color: Colors.white),
+                onPressed: () {
+                  query = '';
+                  _searchFocusNode.requestFocus();
+                },
+              )
+            : const SizedBox.shrink(),
       ),
     ];
   }
@@ -51,9 +53,12 @@ class AthleteSearch extends SearchDelegate<String> {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back),
+      icon: AnimatedIcon(
+        icon: AnimatedIcons.menu_arrow,
+        progress: transitionAnimation,
+        color: Colors.white,
+      ),
       onPressed: () {
-        _searchFocusNode.unfocus(); // برداشتن فوکوس از TextField
         close(context, '');
       },
     );
@@ -70,34 +75,73 @@ class AthleteSearch extends SearchDelegate<String> {
   }
 
   Widget _buildSearchResults() {
-    final athletesAsync = ref.watch(athletesProvider);
+    final lowerQuery = query.toLowerCase();
 
-    return athletesAsync.when(
-      data: (athletes) {
-        final filteredAthletes = athletes
-            .where((athlete) =>
-                athlete.firstName.toLowerCase().contains(query.toLowerCase()) ||
-                athlete.lastName.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+    return ref.watch(athletesProvider).when(
+          data: (athletes) {
+            final filteredAthletes = athletes.where((athlete) {
+              return athlete.firstName.toLowerCase().contains(lowerQuery) ||
+                  athlete.lastName.toLowerCase().contains(lowerQuery);
+            }).toList();
 
-        return ListView.builder(
-          itemCount: filteredAthletes.length,
-          itemBuilder: (context, index) {
-            final athlete = filteredAthletes[index];
-            return AthleteListItem(
-              athlete: athlete,
-              onDelete: () {
-                _searchFocusNode.unfocus(); // برداشتن فوکوس بعد از حذف
-              },
-              onDuplicate: () {
-                _searchFocusNode.unfocus(); // برداشتن فوکوس بعد از کپی
+            if (filteredAthletes.isEmpty) {
+              return _buildEmptyState();
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.only(top: 16),
+              itemCount: filteredAthletes.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, index) {
+                final athlete = filteredAthletes[index];
+                return AthleteListItem(
+                  athlete: athlete,
+                  onDelete: () => _refreshList(),
+                  onDuplicate: () => _refreshList(),
+                );
               },
             );
           },
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
+          error: (error, _) => Center(
+            child: Text(
+              'خطا در دریافت داده‌ها: ${error.toString()}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
         );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(child: Text('خطا: $error')),
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 80,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'نتیجه‌ای یافت نشد',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  void _refreshList() {
+    ref.invalidate(athletesProvider);
+    _searchFocusNode.unfocus();
+  }
+
+  @override
+  String get searchFieldLabel => 'جستجوی ورزشکار...';
 }

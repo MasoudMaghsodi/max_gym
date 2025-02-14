@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/backup_service.dart';
 import '../../services/isar_service.dart';
 import '../../data/datasources/local_datasource.dart';
 import '../../data/datasources/remote_datasource.dart';
@@ -103,3 +104,9 @@ final searchQueryProvider = StateProvider<String>((ref) => '');
 
 // Provider برای مدیریت فیلتر جنسیت
 final filterProvider = StateProvider<String?>((ref) => null);
+
+// اضافه کردن Provider برای BackupService
+final backupServiceProvider = Provider<BackupService>((ref) {
+  final isar = ref.watch(isarProvider).requireValue;
+  return BackupService(isar: isar);
+});
