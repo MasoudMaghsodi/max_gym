@@ -1,199 +1,406 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/core/constants/app_colors.dart';
+import 'package:max_gym/data/datasources/local_datasource.dart';
+import 'package:max_gym/data/datasources/remote_datasource.dart';
+import 'package:max_gym/data/models/athlete_model.dart';
 import 'package:max_gym/data/models/workout_model.dart';
-import 'package:max_gym/presentation/providers/providers.dart';
-import 'package:max_gym/data/models/workout_model.dart' as model;
+import 'package:max_gym/data/models/exercise_model.dart';
+import 'package:max_gym/data/models/technique_model.dart';
+import 'package:max_gym/data/repositories/workout_repository.dart';
 import 'package:max_gym/presentation/widgets/workout_card.dart';
+import 'package:max_gym/services/isar_service.dart';
+import 'package:max_gym/services/notification_service.dart';
+import 'package:max_gym/services/pdf_service.dart';
+import 'package:max_gym/services/qr_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../widgets/add_exercise_dialog_widget.dart';
+class WorkoutPlanPage extends StatefulWidget {
+  final Athlete athlete;
 
-class WorkoutPlanPage extends ConsumerWidget {
-  final int athleteId;
-
-  const WorkoutPlanPage({required this.athleteId, super.key});
+  const WorkoutPlanPage({super.key, required this.athlete});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final workoutPlansAsync = ref.watch(workoutPlansProvider(athleteId));
+  State<WorkoutPlanPage> createState() => _WorkoutPlanPageState();
+}
 
-    return DefaultTabController(
-      length: 7,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('برنامه هفتگی'),
-          centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(48),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TabBar(
-                isScrollable: true,
-                labelColor: Colors.white,
-                unselectedLabelColor: AppColors.primary,
-                indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: AppColors.primary,
-                ),
-                tabs: const [
-                  Tab(text: 'شنبه'),
-                  Tab(text: 'یکشنبه'),
-                  Tab(text: 'دوشنبه'),
-                  Tab(text: 'سه‌شنبه'),
-                  Tab(text: 'چهارشنبه'),
-                  Tab(text: 'پنج‌شنبه'),
-                  Tab(text: 'جمعه'),
-                ],
-              ),
-            ),
-          ),
-        ),
-        body: workoutPlansAsync.when(
-          data: (plans) => TabBarView(
-            children:
-                List.generate(7, (index) => _buildDayPlan(plans, index, ref)),
-          ),
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
-          error: (error, _) => Center(
-            child: Text(
-              'خطا در دریافت برنامه‌ها: ${error.toString()}',
-              style: TextStyle(color: Colors.red.shade700),
-            ),
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: AppColors.primary,
-          onPressed: () => _addWorkout(context, ref),
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-      ),
+class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
+  late List<WorkoutPlan> _weeklyPlans;
+  final List<String> _days = [
+    'شنبه',
+    'یک‌شنبه',
+    'دوشنبه',
+    'سه‌شنبه',
+    'چهارشنبه',
+    'پنج‌شنبه',
+    'جمعه'
+  ];
+  List<Exercise> _exercises = [];
+  List<Technique> _techniques = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _weeklyPlans = List.generate(
+        7,
+        (index) => WorkoutPlan(
+              athleteId: widget.athlete.id,
+              dayOfWeek: index,
+              type: 'rest',
+              targetMuscles: [],
+              exerciseIds: [],
+            ));
+    _loadPlans();
+    _loadLibrary();
+    NotificationService.init(); // راه‌اندازی اعلانات
+  }
+
+  Future<void> _loadPlans() async {
+    final repo = WorkoutRepository(
+      localDataSource: LocalDataSource(IsarService.isar),
+      remoteDataSource: RemoteDataSource(Supabase.instance.client),
     );
+    final plans = await repo.getWorkoutPlansByAthleteId(widget.athlete.id);
+    setState(() {
+      for (var plan in plans) {
+        _weeklyPlans[plan.dayOfWeek] = plan;
+      }
+    });
   }
 
-  Widget _buildDayPlan(
-      List<model.WorkoutPlan> plans, int dayIndex, WidgetRef ref) {
-    final dayName = _getDayName(dayIndex);
-    final dayPlans = plans.where((plan) => plan.day == dayName).toList();
-
-    return dayPlans.isEmpty
-        ? _buildRestDay()
-        : ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: dayPlans.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, index) => WorkoutCard(
-              workout: dayPlans[index],
-              onDelete: () => _deleteWorkout(dayPlans[index].id, ref),
-            ),
-          );
+  Future<void> _loadLibrary() async {
+    final repo = WorkoutRepository(
+      localDataSource: LocalDataSource(IsarService.isar),
+      remoteDataSource: RemoteDataSource(Supabase.instance.client),
+    );
+    _exercises = await repo.getAllExercises();
+    _techniques = await repo.getAllTechniques();
+    setState(() {});
   }
 
-  Widget _buildRestDay() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('برنامه تمرینی ${widget.athlete.firstName}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: _downloadPdf,
+          ),
+          IconButton(
+            icon: const Icon(Icons.qr_code),
+            onPressed: _generateQr,
+          ),
+        ],
+      ),
+      body: Column(
         children: [
-          Icon(Icons.bedtime_rounded, size: 60, color: Colors.grey.shade400),
-          const SizedBox(height: 16),
-          Text(
-            'روز استراحت',
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+          SizedBox(
+            height: 100.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 7,
+              itemBuilder: (context, index) {
+                final plan = _weeklyPlans[index];
+                return GestureDetector(
+                  onTap: () => _editPlan(plan),
+                  child: Container(
+                    width: 100.w,
+                    margin: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: _getDayColor(plan.type),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _days[index],
+                        style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _weeklyPlans.length,
+              itemBuilder: (context, index) {
+                return WorkoutCard(
+                  workoutPlan: _weeklyPlans[index],
+                  onEdit: () => _editPlan(_weeklyPlans[index]),
+                  onDelete: () => _deletePlan(_weeklyPlans[index]),
+                );
+              },
             ),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _editPlan(null),
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
-  String _getDayName(int index) {
-    const days = [
-      'شنبه',
-      'یکشنبه',
-      'دوشنبه',
-      'سه‌شنبه',
-      'چهارشنبه',
-      'پنج‌شنبه',
-      'جمعه'
-    ];
-    return days[index];
+  Color _getDayColor(String type) {
+    switch (type) {
+      case 'training':
+        return AppColors.primary;
+      case 'rest':
+        return Colors.grey.withValues(alpha: 0.5);
+      case 'off':
+        return AppColors.error.withValues(alpha: 0.5);
+      default:
+        return Colors.grey;
+    }
   }
 
-  void _addWorkout(BuildContext context, WidgetRef ref) {
-    final currentTabIndex = DefaultTabController.of(context).index;
-    final currentDay = _getDayName(currentTabIndex);
+  void _editPlan(WorkoutPlan? plan) async {
+    final newPlan = await _showEditDialog(plan ??
+        WorkoutPlan(
+          athleteId: widget.athlete.id,
+          dayOfWeek: 0,
+          type: 'training',
+          targetMuscles: [],
+          exerciseIds: [],
+        ));
+    if (newPlan != null) {
+      setState(() {
+        _weeklyPlans[newPlan.dayOfWeek] = newPlan;
+      });
+      final repo = WorkoutRepository(
+        localDataSource: LocalDataSource(IsarService.isar),
+        remoteDataSource: RemoteDataSource(Supabase.instance.client),
+      );
+      await repo.saveWorkoutPlan(newPlan);
+      // تنظیم اعلان
+      await NotificationService.scheduleNotification(
+        id: newPlan.dayOfWeek,
+        title: 'تمرین امروز',
+        body:
+            'امروز ${_days[newPlan.dayOfWeek]} برنامه ${newPlan.targetMuscles.join(', ')} داری!',
+        scheduledDate: DateTime.now()
+            .add(Duration(days: newPlan.dayOfWeek - DateTime.now().weekday)),
+      );
+    }
+  }
 
-    showModalBottomSheet(
+  void _deletePlan(WorkoutPlan plan) async {
+    final repo = WorkoutRepository(
+      localDataSource: LocalDataSource(IsarService.isar),
+      remoteDataSource: RemoteDataSource(Supabase.instance.client),
+    );
+    await repo.deleteWorkoutPlan(plan.id);
+    setState(() {
+      _weeklyPlans[plan.dayOfWeek] = WorkoutPlan(
+        athleteId: widget.athlete.id,
+        dayOfWeek: plan.dayOfWeek,
+        type: 'rest',
+        targetMuscles: [],
+        exerciseIds: [],
+      );
+    });
+    await NotificationService.cancelNotification(plan.dayOfWeek);
+  }
+
+  Future<WorkoutPlan?> _showEditDialog(WorkoutPlan plan) async {
+    String selectedType = plan.type;
+    List<String> selectedMuscles = List.from(plan.targetMuscles);
+    List<Map<String, dynamic>> exercises = List.from(plan.exerciseIds);
+    return showDialog<WorkoutPlan>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: AddExerciseDialog(
-          onSave: (exerciseData) async {
-            final workout = WorkoutPlan(
-              id: Isar.autoIncrement,
-              athleteId: athleteId,
-              day: currentDay,
-              isRestDay: false,
-              exercises: [
-                WorkoutExercise(
-                  exerciseName: exerciseData['name'],
-                  sets: exerciseData['sets'],
-                  reps: exerciseData['reps'],
-                  technique: exerciseData['technique'],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('ویرایش برنامه'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButton<String>(
+                  value: selectedType,
+                  items: const [
+                    DropdownMenuItem(value: 'training', child: Text('تمرین')),
+                    DropdownMenuItem(value: 'rest', child: Text('استراحت')),
+                    DropdownMenuItem(value: 'off', child: Text('تعطیل')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedType = value!;
+                    });
+                  },
                 ),
+                if (selectedType == 'training') ...[
+                  Wrap(
+                    spacing: 8.w,
+                    children:
+                        ['سینه', 'پشت', 'بازو', 'شانه', 'پا'].map((muscle) {
+                      return FilterChip(
+                        label: Text(muscle),
+                        selected: selectedMuscles.contains(muscle),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              selectedMuscles.add(muscle);
+                            } else {
+                              selectedMuscles.remove(muscle);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 10.h),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final newExercise = await _addExerciseDialog();
+                      if (newExercise != null) {
+                        setState(() {
+                          exercises.add(newExercise);
+                        });
+                      }
+                    },
+                    child: const Text('اضافه کردن تمرین'),
+                  ),
+                  ...exercises.map((exercise) => ListTile(
+                        title: Text(exercise['name']),
+                        subtitle: Text(
+                            '${exercise['sets']} ست، ${exercise['reps']} تکرار'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            setState(() {
+                              exercises.remove(exercise);
+                            });
+                          },
+                        ),
+                      )),
+                ],
               ],
-            );
-
-            try {
-              await ref
-                  .read(workoutRepositoryProvider)
-                  .saveWorkoutPlan(workout);
-              // ignore: unused_result
-              ref.refresh(workoutPlansProvider(athleteId));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('تمرین با موفقیت اضافه شد'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('خطا در افزودن تمرین: ${e.toString()}'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-          },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('لغو'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                  context,
+                  WorkoutPlan(
+                    athleteId: plan.athleteId,
+                    dayOfWeek: plan.dayOfWeek,
+                    type: selectedType,
+                    targetMuscles: selectedMuscles,
+                    exerciseIds: exercises.map((e) => e['id'] as int).toList(),
+                  )),
+              child: const Text('ثبت'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _deleteWorkout(int id, WidgetRef ref) async {
-    try {
-      await ref.read(workoutRepositoryProvider).deleteWorkoutPlan(id);
-      // ignore: unused_result
-      ref.refresh(workoutPlansProvider(athleteId));
-    } catch (e) {
-      debugPrint('خطا در حذف برنامه: ${e.toString()}');
-    }
+  Future<Map<String, dynamic>?> _addExerciseDialog() async {
+    String? selectedExercise;
+    String? selectedTechnique;
+    int sets = 1;
+    int reps = 1;
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('اضافه کردن تمرین'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButton<String>(
+                hint: const Text('تمرین'),
+                value: selectedExercise,
+                items: _exercises
+                    .map((e) =>
+                        DropdownMenuItem(value: e.name, child: Text(e.name)))
+                    .toList(),
+                onChanged: (value) => setState(() => selectedExercise = value),
+              ),
+              DropdownButton<String>(
+                hint: const Text('تکنیک'),
+                value: selectedTechnique,
+                items: _techniques
+                    .map((t) =>
+                        DropdownMenuItem(value: t.name, child: Text(t.name)))
+                    .toList(),
+                onChanged: (value) => setState(() => selectedTechnique = value),
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'ست'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => sets = int.tryParse(value) ?? 1,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'تکرار'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => reps = int.tryParse(value) ?? 1,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('لغو'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, {
+                'name': selectedExercise ?? 'بدون نام',
+                'tool': _exercises
+                    .firstWhere(
+                      (e) => e.name == selectedExercise,
+                      orElse: () => Exercise(
+                        name: '',
+                        tool: '',
+                      ),
+                    )
+                    .tool,
+                'technique': selectedTechnique ?? '',
+                'sets': sets,
+                'reps': reps,
+                'note': '',
+              }),
+              child: const Text('اضافه'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _downloadPdf() async {
+    final pdfPath =
+        await PdfService.generateWorkoutPdf(_weeklyPlans, widget.athlete);
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('PDF دانلود شد: $pdfPath')),
+    );
+  }
+
+  void _generateQr() async {
+    final qrUrl = await QrService.generateQrCode(_weeklyPlans, widget.athlete);
+    showDialog(
+      // ignore: use_build_context_synchronously
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('QR برنامه'),
+        content: Image.network(qrUrl),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('بستن'),
+          ),
+        ],
+      ),
+    );
   }
 }

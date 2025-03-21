@@ -52,13 +52,23 @@ const AthleteSchema = CollectionSchema(
       name: r'isSynced',
       type: IsarType.bool,
     ),
-    r'lastName': PropertySchema(
+    r'lastModified': PropertySchema(
       id: 7,
+      name: r'lastModified',
+      type: IsarType.dateTime,
+    ),
+    r'lastName': PropertySchema(
+      id: 8,
       name: r'lastName',
       type: IsarType.string,
     ),
+    r'tags': PropertySchema(
+      id: 9,
+      name: r'tags',
+      type: IsarType.stringList,
+    ),
     r'weight': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'weight',
       type: IsarType.double,
     )
@@ -77,7 +87,7 @@ const AthleteSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'firstName',
-          type: IndexType.value,
+          type: IndexType.hash,
           caseSensitive: true,
         )
       ],
@@ -90,7 +100,7 @@ const AthleteSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'lastName',
-          type: IndexType.value,
+          type: IndexType.hash,
           caseSensitive: true,
         )
       ],
@@ -110,11 +120,33 @@ int _athleteEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.coachNote.length * 3;
+  {
+    final value = object.coachNote;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.firstName.length * 3;
-  bytesCount += 3 + object.gender.length * 3;
-  bytesCount += 3 + object.goal.length * 3;
+  {
+    final value = object.gender;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.goal;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.lastName.length * 3;
+  bytesCount += 3 + object.tags.length * 3;
+  {
+    for (var i = 0; i < object.tags.length; i++) {
+      final value = object.tags[i];
+      bytesCount += value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -131,8 +163,10 @@ void _athleteSerialize(
   writer.writeString(offsets[4], object.goal);
   writer.writeDouble(offsets[5], object.height);
   writer.writeBool(offsets[6], object.isSynced);
-  writer.writeString(offsets[7], object.lastName);
-  writer.writeDouble(offsets[8], object.weight);
+  writer.writeDateTime(offsets[7], object.lastModified);
+  writer.writeString(offsets[8], object.lastName);
+  writer.writeStringList(offsets[9], object.tags);
+  writer.writeDouble(offsets[10], object.weight);
 }
 
 Athlete _athleteDeserialize(
@@ -142,17 +176,19 @@ Athlete _athleteDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Athlete(
-    age: reader.readLong(offsets[0]),
-    coachNote: reader.readString(offsets[1]),
+    age: reader.readLongOrNull(offsets[0]),
+    coachNote: reader.readStringOrNull(offsets[1]),
     firstName: reader.readString(offsets[2]),
-    gender: reader.readString(offsets[3]),
-    goal: reader.readString(offsets[4]),
-    height: reader.readDouble(offsets[5]),
-    id: id,
-    lastName: reader.readString(offsets[7]),
-    weight: reader.readDouble(offsets[8]),
+    gender: reader.readStringOrNull(offsets[3]),
+    goal: reader.readStringOrNull(offsets[4]),
+    height: reader.readDoubleOrNull(offsets[5]),
+    isSynced: reader.readBoolOrNull(offsets[6]) ?? false,
+    lastModified: reader.readDateTimeOrNull(offsets[7]),
+    lastName: reader.readString(offsets[8]),
+    tags: reader.readStringList(offsets[9]) ?? const [],
+    weight: reader.readDoubleOrNull(offsets[10]),
   );
-  object.isSynced = reader.readBool(offsets[6]);
+  object.id = id;
   return object;
 }
 
@@ -164,23 +200,27 @@ P _athleteDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
+    case 9:
+      return (reader.readStringList(offset) ?? const []) as P;
+    case 10:
+      return (reader.readDoubleOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -202,22 +242,6 @@ extension AthleteQueryWhereSort on QueryBuilder<Athlete, Athlete, QWhere> {
   QueryBuilder<Athlete, Athlete, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhere> anyFirstName() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        const IndexWhereClause.any(indexName: r'firstName'),
-      );
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhere> anyLastName() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        const IndexWhereClause.any(indexName: r'lastName'),
-      );
     });
   }
 }
@@ -333,97 +357,6 @@ extension AthleteQueryWhere on QueryBuilder<Athlete, Athlete, QWhereClause> {
     });
   }
 
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> firstNameGreaterThan(
-    String firstName, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'firstName',
-        lower: [firstName],
-        includeLower: include,
-        upper: [],
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> firstNameLessThan(
-    String firstName, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'firstName',
-        lower: [],
-        upper: [firstName],
-        includeUpper: include,
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> firstNameBetween(
-    String lowerFirstName,
-    String upperFirstName, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'firstName',
-        lower: [lowerFirstName],
-        includeLower: includeLower,
-        upper: [upperFirstName],
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> firstNameStartsWith(
-      String FirstNamePrefix) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'firstName',
-        lower: [FirstNamePrefix],
-        upper: ['$FirstNamePrefix\u{FFFFF}'],
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> firstNameIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'firstName',
-        value: [''],
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> firstNameIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(IndexWhereClause.lessThan(
-              indexName: r'firstName',
-              upper: [''],
-            ))
-            .addWhereClause(IndexWhereClause.greaterThan(
-              indexName: r'firstName',
-              lower: [''],
-            ));
-      } else {
-        return query
-            .addWhereClause(IndexWhereClause.greaterThan(
-              indexName: r'firstName',
-              lower: [''],
-            ))
-            .addWhereClause(IndexWhereClause.lessThan(
-              indexName: r'firstName',
-              upper: [''],
-            ));
-      }
-    });
-  }
-
   QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameEqualTo(
       String lastName) {
     return QueryBuilder.apply(this, (query) {
@@ -468,102 +401,27 @@ extension AthleteQueryWhere on QueryBuilder<Athlete, Athlete, QWhereClause> {
       }
     });
   }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameGreaterThan(
-    String lastName, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastName',
-        lower: [lastName],
-        includeLower: include,
-        upper: [],
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameLessThan(
-    String lastName, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastName',
-        lower: [],
-        upper: [lastName],
-        includeUpper: include,
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameBetween(
-    String lowerLastName,
-    String upperLastName, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastName',
-        lower: [lowerLastName],
-        includeLower: includeLower,
-        upper: [upperLastName],
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameStartsWith(
-      String LastNamePrefix) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastName',
-        lower: [LastNamePrefix],
-        upper: ['$LastNamePrefix\u{FFFFF}'],
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'lastName',
-        value: [''],
-      ));
-    });
-  }
-
-  QueryBuilder<Athlete, Athlete, QAfterWhereClause> lastNameIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(IndexWhereClause.lessThan(
-              indexName: r'lastName',
-              upper: [''],
-            ))
-            .addWhereClause(IndexWhereClause.greaterThan(
-              indexName: r'lastName',
-              lower: [''],
-            ));
-      } else {
-        return query
-            .addWhereClause(IndexWhereClause.greaterThan(
-              indexName: r'lastName',
-              lower: [''],
-            ))
-            .addWhereClause(IndexWhereClause.lessThan(
-              indexName: r'lastName',
-              upper: [''],
-            ));
-      }
-    });
-  }
 }
 
 extension AthleteQueryFilter
     on QueryBuilder<Athlete, Athlete, QFilterCondition> {
-  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageEqualTo(int value) {
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'age',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'age',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'age',
@@ -573,7 +431,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageGreaterThan(
-    int value, {
+    int? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -586,7 +444,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageLessThan(
-    int value, {
+    int? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -599,8 +457,8 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> ageBetween(
-    int lower,
-    int upper, {
+    int? lower,
+    int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -615,8 +473,24 @@ extension AthleteQueryFilter
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> coachNoteIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'coachNote',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> coachNoteIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'coachNote',
+      ));
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> coachNoteEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -629,7 +503,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> coachNoteGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -644,7 +518,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> coachNoteLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -659,8 +533,8 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> coachNoteBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -875,8 +749,24 @@ extension AthleteQueryFilter
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> genderIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'gender',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> genderIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'gender',
+      ));
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> genderEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -889,7 +779,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> genderGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -904,7 +794,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> genderLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -919,8 +809,8 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> genderBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1005,8 +895,24 @@ extension AthleteQueryFilter
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> goalIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'goal',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> goalIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'goal',
+      ));
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> goalEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1019,7 +925,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> goalGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1034,7 +940,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> goalLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1049,8 +955,8 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> goalBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1135,8 +1041,24 @@ extension AthleteQueryFilter
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> heightIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'height',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> heightIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'height',
+      ));
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> heightEqualTo(
-    double value, {
+    double? value, {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1149,7 +1071,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> heightGreaterThan(
-    double value, {
+    double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -1164,7 +1086,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> heightLessThan(
-    double value, {
+    double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -1179,8 +1101,8 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> heightBetween(
-    double lower,
-    double upper, {
+    double? lower,
+    double? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     double epsilon = Query.epsilon,
@@ -1255,6 +1177,76 @@ extension AthleteQueryFilter
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isSynced',
         value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> lastModifiedIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastModified',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition>
+      lastModifiedIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastModified',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> lastModifiedEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastModified',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> lastModifiedGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastModified',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> lastModifiedLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastModified',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> lastModifiedBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastModified',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1389,8 +1381,239 @@ extension AthleteQueryFilter
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'tags',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'tags',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'tags',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition>
+      tagsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'tags',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> tagsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> weightIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'weight',
+      ));
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterFilterCondition> weightIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'weight',
+      ));
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> weightEqualTo(
-    double value, {
+    double? value, {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1403,7 +1626,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> weightGreaterThan(
-    double value, {
+    double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -1418,7 +1641,7 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> weightLessThan(
-    double value, {
+    double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -1433,8 +1656,8 @@ extension AthleteQueryFilter
   }
 
   QueryBuilder<Athlete, Athlete, QAfterFilterCondition> weightBetween(
-    double lower,
-    double upper, {
+    double? lower,
+    double? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     double epsilon = Query.epsilon,
@@ -1540,6 +1763,18 @@ extension AthleteQuerySortBy on QueryBuilder<Athlete, Athlete, QSortBy> {
   QueryBuilder<Athlete, Athlete, QAfterSortBy> sortByIsSyncedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> sortByLastModified() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> sortByLastModifiedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.desc);
     });
   }
 
@@ -1666,6 +1901,18 @@ extension AthleteQuerySortThenBy
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> thenByLastModified() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QAfterSortBy> thenByLastModifiedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.desc);
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QAfterSortBy> thenByLastName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastName', Sort.asc);
@@ -1739,10 +1986,22 @@ extension AthleteQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Athlete, Athlete, QDistinct> distinctByLastModified() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastModified');
+    });
+  }
+
   QueryBuilder<Athlete, Athlete, QDistinct> distinctByLastName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Athlete, Athlete, QDistinct> distinctByTags() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'tags');
     });
   }
 
@@ -1761,13 +2020,13 @@ extension AthleteQueryProperty
     });
   }
 
-  QueryBuilder<Athlete, int, QQueryOperations> ageProperty() {
+  QueryBuilder<Athlete, int?, QQueryOperations> ageProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'age');
     });
   }
 
-  QueryBuilder<Athlete, String, QQueryOperations> coachNoteProperty() {
+  QueryBuilder<Athlete, String?, QQueryOperations> coachNoteProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'coachNote');
     });
@@ -1779,19 +2038,19 @@ extension AthleteQueryProperty
     });
   }
 
-  QueryBuilder<Athlete, String, QQueryOperations> genderProperty() {
+  QueryBuilder<Athlete, String?, QQueryOperations> genderProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'gender');
     });
   }
 
-  QueryBuilder<Athlete, String, QQueryOperations> goalProperty() {
+  QueryBuilder<Athlete, String?, QQueryOperations> goalProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'goal');
     });
   }
 
-  QueryBuilder<Athlete, double, QQueryOperations> heightProperty() {
+  QueryBuilder<Athlete, double?, QQueryOperations> heightProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'height');
     });
@@ -1803,13 +2062,25 @@ extension AthleteQueryProperty
     });
   }
 
+  QueryBuilder<Athlete, DateTime?, QQueryOperations> lastModifiedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastModified');
+    });
+  }
+
   QueryBuilder<Athlete, String, QQueryOperations> lastNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastName');
     });
   }
 
-  QueryBuilder<Athlete, double, QQueryOperations> weightProperty() {
+  QueryBuilder<Athlete, List<String>, QQueryOperations> tagsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'tags');
+    });
+  }
+
+  QueryBuilder<Athlete, double?, QQueryOperations> weightProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'weight');
     });

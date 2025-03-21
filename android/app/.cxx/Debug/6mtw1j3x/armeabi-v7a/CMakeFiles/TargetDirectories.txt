@@ -1,0 +1,2 @@
+/Users/a1/Documents/MaxGym/max_gym/android/app/.cxx/Debug/6mtw1j3x/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/a1/Documents/MaxGym/max_gym/android/app/.cxx/Debug/6mtw1j3x/armeabi-v7a/CMakeFiles/rebuild_cache.dir

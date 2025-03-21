@@ -1,88 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:max_gym/services/isar_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'core/constants/app_colors.dart';
-import 'services/isar_service.dart';
-import 'core/network/supabase_config.dart';
-// import 'core/network/supabase_table_creator.dart';
-import 'data/datasources/local_datasource.dart';
-import 'data/datasources/remote_datasource.dart';
-import 'data/repositories/athlete_repository.dart';
-import 'presentation/pages/athlete_list_page.dart';
-// ignore: depend_on_referenced_packages
-import 'package:flutter_localizations/flutter_localizations.dart';
-
-import 'presentation/providers/providers.dart';
-import 'services/connectivity_service.dart';
+import 'package:max_gym/core/network/supabase_config.dart';
+import 'package:max_gym/core/theme/theme_config.dart';
+import 'package:max_gym/presentation/pages/splash_screen.dart';
+import 'package:max_gym/presentation/pages/stats_page.dart';
+import 'package:max_gym/services/crashlytics_service.dart';
+import 'package:max_gym/services/settings_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // مقداردهی اولیه Supabase
-  SupabaseConfig.initialize();
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseKey,
   );
 
-  // ایجاد سرویس‌ها
-  final isar = await IsarService.init();
-  final localDataSource = LocalDataSource(isar);
-  final remoteDataSource = RemoteDataSource(Supabase.instance.client);
-  final connectivityService = ConnectivityService();
-
-  // ایجاد مخازن
-  final athleteRepository = AthleteRepository(
-    localDataSource: localDataSource,
-    remoteDataSource: remoteDataSource,
-    connectivityService: connectivityService,
+  await IsarService.init();
+  await CrashlyticsService.init();
+  await SettingsService.init();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        athleteRepositoryProvider.overrideWithValue(athleteRepository),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    ref.read(settingsServiceProvider.notifier).loadSettings();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsServiceProvider);
     return ScreenUtilInit(
-      designSize: const Size(375, 812),
+      designSize: const Size(360, 690),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (context, _) {
+      builder: (context, child) {
         return MaterialApp(
+          title: 'Max Gym',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: settings.themeMode,
+          locale: Locale(settings.language),
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const SplashScreen(),
+            '/stats': (context) => const StatsPage(),
+          },
           debugShowCheckedModeBanner: false,
-          theme: ThemeData.light().copyWith(
-            primaryColor: AppColors.primary,
-            scaffoldBackgroundColor: AppColors.background,
-            appBarTheme: const AppBarTheme(
-              backgroundColor: AppColors.primary,
-              titleTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          darkTheme: ThemeData.dark(),
-          themeMode: ThemeMode.system,
-          locale: const Locale('fa'),
-          supportedLocales: const [Locale('fa'), Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: const AthleteListPage(),
+          builder: (context, child) {
+            return Directionality(
+              textDirection: settings.language == 'fa'
+                  ? TextDirection.rtl
+                  : TextDirection.ltr,
+              child: child!,
+            );
+          },
         );
       },
     );

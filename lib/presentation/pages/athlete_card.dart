@@ -1,252 +1,205 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:isar/isar.dart';
-import '../../core/constants/app_colors.dart';
-import '../../data/models/athlete_model.dart';
-import '../providers/providers.dart';
-import 'add_edit_athlete_page.dart';
-import 'workout_plan_page.dart';
+import 'package:max_gym/core/constants/app_colors.dart';
+import 'package:max_gym/data/datasources/local_datasource.dart';
+import 'package:max_gym/data/datasources/remote_datasource.dart';
+import 'package:max_gym/data/models/athlete_model.dart';
+import 'package:max_gym/data/repositories/athlete_repository.dart';
+import 'package:max_gym/presentation/pages/add_edit_athlete_page.dart';
+import 'package:max_gym/presentation/widgets/custom_chip.dart';
+import 'package:max_gym/services/avatar_generator.dart';
+import 'package:max_gym/services/isar_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AthleteCard extends ConsumerWidget {
+class AthleteCard extends StatefulWidget {
   final Athlete athlete;
-  final VoidCallback? onDelete;
 
-  const AthleteCard({
-    required this.athlete,
-    this.onDelete,
-    super.key,
-  });
+  const AthleteCard({super.key, required this.athlete});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: _getGoalColor(athlete.goal),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.1),
-          child: Text(
-            '${athlete.firstName[0]}${athlete.lastName[0]}',
-            style: const TextStyle(color: AppColors.primary),
-          ),
+  State<AthleteCard> createState() => _AthleteCardState();
+}
+
+class _AthleteCardState extends State<AthleteCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final needsNewPlan =
+        DateTime.now().difference(widget.athlete.lastModified!).inDays > 30;
+
+    return GestureDetector(
+      onLongPress: () {
+        _controller.forward().then((_) => _controller.reverse());
+      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AddEditAthletePage(athlete: widget.athlete),
         ),
-        title: Text(
-          '${athlete.firstName} ${athlete.lastName}',
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('سن: ${athlete.age}'),
-            Text('هدف: ${athlete.goal}'),
-            Text(
-              athlete.gender,
-              style: TextStyle(
-                color: athlete.gender == 'مرد' ? Colors.blue : Colors.pink,
+      ),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                // ignore: deprecated_member_use
+                color: Theme.of(context).cardColor.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: [
+                  BoxShadow(
+                    // ignore: deprecated_member_use
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8.r,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  if (needsNewPlan)
+                    Container(
+                      // ignore: deprecated_member_use
+                      color: AppColors.error.withOpacity(0.8),
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      child: Center(
+                        child: Text(
+                          'وقت برنامه جدید!',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 12.sp),
+                        ),
+                      ),
+                    ),
+                  Row(
+                    children: [
+                      AvatarGenerator.generateAvatar(
+                        widget.athlete.firstName + widget.athlete.lastName,
+                        size: 40.r,
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${widget.athlete.firstName} ${widget.athlete.lastName} | ${widget.athlete.age}',
+                              style: TextStyle(fontSize: 16.sp),
+                            ),
+                            Text(
+                              widget.athlete.goal!,
+                              style: TextStyle(
+                                  fontSize: 14.sp, color: Colors.grey),
+                            ),
+                            Wrap(
+                              spacing: 5.w,
+                              children: widget.athlete.tags
+                                  .map((tag) =>
+                                      CustomChip(label: tag, isSelected: true))
+                                  .toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        widget.athlete.isSynced
+                            ? Icons.check_circle
+                            : Icons.warning,
+                        color: widget.athlete.isSynced
+                            ? AppColors.primary
+                            : Colors.orange,
+                        size: 20.r,
+                      ),
+                      PopupMenuButton<String>(
+                        onSelected: (value) => _handleAction(value, context),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                              value: 'edit', child: Text('ویرایش')),
+                          const PopupMenuItem(
+                              value: 'duplicate', child: Text('کپی')),
+                          const PopupMenuItem(
+                              value: 'delete', child: Text('حذف')),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.fitness_center),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => WorkoutPlanPage(athleteId: athlete.id),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.sync, color: Colors.grey.shade600),
-              onPressed: () => _syncAthlete(context, ref),
-            ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
-              itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: ListTile(
-                    leading: Icon(Icons.edit, color: AppColors.primary),
-                    title: Text('ویرایش'),
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'duplicate',
-                  child: ListTile(
-                    leading: Icon(Icons.copy, color: AppColors.primary),
-                    title: Text('کپی'),
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: ListTile(
-                    leading: Icon(Icons.delete, color: Colors.red),
-                    title: Text('حذف', style: TextStyle(color: Colors.red)),
-                  ),
-                ),
-              ],
-              onSelected: (value) => _handleAction(value, context, ref),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Color _getGoalColor(String goal) {
-    switch (goal) {
-      case 'عضله‌ سازی':
-        return Colors.green.shade50;
-      case 'کاهش وزن':
-        return Colors.blue.shade50;
-      default:
-        return Colors.white;
-    }
-  }
-
-  void _handleAction(String value, BuildContext context, WidgetRef ref) async {
-    switch (value) {
+  void _handleAction(String action, BuildContext context) {
+    switch (action) {
       case 'edit':
-        await Navigator.push(
+        Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => AddEditAthletePage(athlete: athlete),
+            builder: (_) => AddEditAthletePage(athlete: widget.athlete),
           ),
         );
-        // ignore: unused_result
-        ref.refresh(athletesProvider);
         break;
-
-      case 'delete':
-        final confirmed = await _confirmDelete(context);
-        if (confirmed) {
-          try {
-            await ref.read(athleteRepositoryProvider).deleteAthlete(athlete.id);
-            onDelete?.call(); // فراخوانی متد onDelete
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('ورزشکار با موفقیت حذف شد'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('خطا در حذف ورزشکار: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        }
-        break;
-
       case 'duplicate':
-        final athletes = ref.read(athletesProvider).value ?? [];
-        final newLastName = _generateCopyLastName(athlete.lastName, athletes);
-
-        final newAthlete = athlete.copyWith(
-          id: Isar.autoIncrement,
-          lastName: newLastName,
+        final newAthlete = widget.athlete..id = Isar.autoIncrement;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AddEditAthletePage(athlete: newAthlete),
+          ),
         );
-
-        try {
-          await ref.read(athleteRepositoryProvider).saveAthlete(newAthlete);
-          // ignore: unused_result
-          ref.refresh(athletesProvider);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('ورزشکار با موفقیت کپی شد'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('خطا در کپی ورزشکار: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
         break;
-    }
-  }
-
-  Future<bool> _confirmDelete(BuildContext context) async {
-    return await showDialog<bool>(
+      case 'delete':
+        showDialog(
           context: context,
-          builder: (_) => AlertDialog(
+          builder: (context) => AlertDialog(
             title: const Text('حذف ورزشکار'),
-            content: const Text(
-                'آیا مطمئن هستید می‌خواهید این ورزشکار را حذف کنید؟'),
+            content: const Text('آیا مطمئن هستید؟'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('لغو', style: TextStyle(color: Colors.grey)),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('خیر'),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('حذف', style: TextStyle(color: Colors.red)),
+                onPressed: () async {
+                  await AthleteRepository(
+                    LocalDataSource(IsarService.isar),
+                    RemoteDataSource(Supabase.instance.client),
+                  ).deleteAthlete(widget.athlete.id);
+                  // ignore: use_build_context_synchronously
+                  if (mounted) Navigator.pop(context);
+                  setState(() {});
+                },
+                child: const Text('بله'),
               ),
             ],
           ),
-        ) ??
-        false;
-  }
-
-  String _generateCopyLastName(String baseLastName, List<Athlete> athletes) {
-    final regex = RegExp(r'^(.+?)(\s*(\d+))?$');
-    final match = regex.firstMatch(baseLastName);
-    final baseName = match?.group(1) ?? baseLastName;
-    final existingNumbers = athletes
-        .where((a) => a.lastName.startsWith(baseName))
-        .map((a) =>
-            int.tryParse(regex.firstMatch(a.lastName)?.group(3) ?? '') ?? 0)
-        .toList();
-
-    final maxNumber = existingNumbers.isNotEmpty
-        ? existingNumbers.reduce((a, b) => a > b ? a : b)
-        : 0;
-    return '$baseName ${maxNumber + 1}';
-  }
-
-  void _syncAthlete(BuildContext context, WidgetRef ref) async {
-    try {
-      await ref.read(athleteRepositoryProvider).syncDataToSupabase();
-      // ignore: unused_result
-      ref.refresh(athletesProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('داده‌ها با موفقیت سینک شدند'),
-            backgroundColor: Colors.green,
-          ),
         );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطا در سینک داده‌ها: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+        break;
     }
   }
 }

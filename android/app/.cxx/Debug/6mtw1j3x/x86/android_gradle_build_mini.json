@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/a1/development/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/a1/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/a1/Documents/MaxGym/max_gym/android/app/.cxx/Debug/6mtw1j3x/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/a1/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/a1/Documents/MaxGym/max_gym/android/app/.cxx/Debug/6mtw1j3x/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

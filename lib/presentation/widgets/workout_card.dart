@@ -1,147 +1,154 @@
 import 'package:flutter/material.dart';
-import 'package:max_gym/data/models/workout_model.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/core/constants/app_colors.dart';
+import 'package:max_gym/data/models/workout_model.dart';
 
 class WorkoutCard extends StatelessWidget {
-  final WorkoutPlan workout;
+  final WorkoutPlan workoutPlan;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  WorkoutCard({
-    required this.workout,
-    required this.onDelete,
+  const WorkoutCard({
     super.key,
+    required this.workoutPlan,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Dismissible(
+      key: Key(workoutPlan.id.toString()),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => onDelete(),
+      background: Container(
+        color: AppColors.error,
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20.w),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: ExpansionTile(
-        leading: Icon(
-          workout.isRestDay ? Icons.bedtime_rounded : Icons.fitness_center,
-          color: AppColors.primary,
-        ),
-        title: Text(
-          workout.day,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+      child: GestureDetector(
+        onLongPress: onEdit,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+          padding: EdgeInsets.all(10.w),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor.withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
           ),
-        ),
-        subtitle: Text(
-          workout.isRestDay
-              ? 'روز استراحت'
-              : 'تعداد تمرینات: ${workout.exercises.length}',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 14,
-          ),
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete, color: Colors.red),
-                title: Text('حذف', style: TextStyle(color: Colors.red)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _getDayName(workoutPlan.dayOfWeek),
+                    style:
+                        TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    _getTypeText(workoutPlan.type),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: _getTypeColor(workoutPlan.type),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-          onSelected: (value) => _handleDelete(context),
-        ),
-        children: [
-          if (workout.isRestDay)
-            _buildRestDayContent()
-          else
-            ...workout.exercises.map(_buildExerciseCard).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExerciseCard(WorkoutExercise exercise) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        leading: const Icon(Icons.repeat, color: AppColors.primary),
-        title: Text(
-          exercise.exerciseName ?? 'بدون نام',
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (exercise.sets != null)
-              Text('ست‌ها: ${exercise.sets}', style: _detailStyle),
-            if (exercise.reps != null)
-              Text('تکرارها: ${exercise.reps}', style: _detailStyle),
-            if (exercise.technique != null)
-              Text('تکنیک: ${exercise.technique}', style: _detailStyle),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRestDayContent() {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Text(
-        'این روز به عنوان روز استراحت تنظیم شده است',
-        style: TextStyle(
-          color: Colors.grey,
-          fontStyle: FontStyle.italic,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  void _handleDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('حذف برنامه تمرینی'),
-        content:
-            const Text('آیا مطمئن هستید می‌خواهید این برنامه را حذف کنید؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('لغو', style: TextStyle(color: Colors.grey)),
+              if (workoutPlan.type == 'training') ...[
+                SizedBox(height: 5.h),
+                Text(
+                  'عضلات هدف: ${workoutPlan.targetMuscles.join(', ')}',
+                  style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                ),
+                SizedBox(height: 5.h),
+                LinearProgressIndicator(
+                  value: _calculateProgress(),
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+                SizedBox(height: 5.h),
+                ...workoutPlan.exerciseIds.map((id) => Padding(
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      child: Row(
+                        children: [
+                          Icon(Icons.fitness_center, size: 16.r),
+                          SizedBox(width: 5.w),
+                          Expanded(
+                            child: Text(
+                              'تمرین $id', // Placeholder, replace with actual exercise data if available
+                              style: TextStyle(fontSize: 14.sp),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onDelete();
-              _showSuccessSnackbar(context);
-            },
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  void _showSuccessSnackbar(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('برنامه تمرینی با موفقیت حذف شد'),
-      backgroundColor: Colors.green,
-      duration: Duration(seconds: 2),
-    ));
+  String _getDayName(int day) {
+    const days = [
+      'شنبه',
+      'یک‌شنبه',
+      'دوشنبه',
+      'سه‌شنبه',
+      'چهارشنبه',
+      'پنج‌شنبه',
+      'جمعه'
+    ];
+    return days[day];
   }
 
-  final TextStyle _detailStyle = TextStyle(
-    color: Colors.grey.shade700,
-    fontSize: 13,
-  );
+  String _getTypeText(String type) {
+    switch (type) {
+      case 'training':
+        return 'تمرین';
+      case 'rest':
+        return 'استراحت';
+      case 'off':
+        return 'تعطیل';
+      default:
+        return 'نامشخص';
+    }
+  }
+
+  Color _getTypeColor(String type) {
+    switch (type) {
+      case 'training':
+        return AppColors.primary;
+      case 'rest':
+        return Colors.grey;
+      case 'off':
+        return AppColors.error;
+      default:
+        return Colors.black;
+    }
+  }
+
+  // ignore: unused_element
+  IconData _getToolIcon(String? tool) {
+    switch (tool) {
+      case 'dumbbell':
+        return Icons.fitness_center;
+      case 'barbell':
+        return Icons.sports_gymnastics;
+      case 'machine':
+        return Icons.build;
+      default:
+        return Icons.person;
+    }
+  }
+
+  double _calculateProgress() {
+    if (workoutPlan.exerciseIds.isEmpty) return 0.0;
+    final totalExercises = workoutPlan.exerciseIds.length;
+    return totalExercises > 0 ? (totalExercises / (totalExercises + 1)) : 0.0;
+  }
 }

@@ -9,7 +9,7 @@ class ConnectivityService {
       return result.contains(ConnectivityResult.mobile) ||
           result.contains(ConnectivityResult.wifi);
     } catch (e) {
-      return false;
+      return false; // فال‌بک به آفلاین در صورت خطا
     }
   }
 }

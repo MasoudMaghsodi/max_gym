@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:max_gym/presentation/pages/athlete_card.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:max_gym/core/constants/app_colors.dart';
 import 'package:max_gym/data/models/athlete_model.dart';
+import 'package:max_gym/presentation/pages/athlete_card.dart';
+import 'package:max_gym/presentation/pages/settings_page.dart';
 import 'package:max_gym/presentation/providers/providers.dart';
-import 'package:max_gym/presentation/pages/add_edit_athlete_page.dart';
+import 'package:max_gym/presentation/widgets/custom_chip.dart';
 
 class AthleteListPage extends ConsumerStatefulWidget {
   const AthleteListPage({super.key});
@@ -13,238 +15,235 @@ class AthleteListPage extends ConsumerStatefulWidget {
   ConsumerState<AthleteListPage> createState() => _AthleteListPageState();
 }
 
-class _AthleteListPageState extends ConsumerState<AthleteListPage> {
-  late TextEditingController _searchController;
-  final bool _isSyncing = false;
+class _AthleteListPageState extends ConsumerState<AthleteListPage>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _searchController = TextEditingController();
+  List<String> selectedFilters = [];
+  final ScrollController _scrollController = ScrollController();
+  List<Athlete> _loadedAthletes = [];
+  int _loadedCount = 10;
+  late AnimationController _fabController;
+  late Animation<double> _fabAnimation;
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
+    _scrollController.addListener(_loadMore);
+    _loadInitialAthletes();
+    _fabController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _fabAnimation = Tween<double>(begin: 0, end: 1).animate(_fabController);
+  }
+
+  Future<void> _loadInitialAthletes() async {
+    final athletes =
+        await ref.read(athleteRepositoryProvider).searchAthletes('');
+    setState(() {
+      _loadedAthletes = athletes.take(_loadedCount).toList();
+    });
+  }
+
+  void _loadMore() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      setState(() {
+        _loadedCount += 10;
+        _loadInitialAthletes();
+      });
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
+    _fabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final athletesAsync = ref.watch(athletesProvider);
+    // ignore: unused_local_variable
+    final athletesAsync = ref.watch(filteredAthletesProvider);
+    final athleteRepo = ref.watch(athleteRepositoryProvider);
+    final queueCount = ref.watch(offlineQueueProvider).when(
+          data: (queue) => queue.length,
+          loading: () => 0,
+          error: (_, __) => 0,
+        );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('لیست ورزشکاران'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: _isSyncing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200.h,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text('ورزشکاران'),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/images/max.png', // لوگو به عنوان پس‌زمینه
+                    fit: BoxFit.cover,
+                    // ignore: deprecated_member_use
+                    color: Colors.black.withOpacity(0.3),
+                    colorBlendMode: BlendMode.darken,
+                  ),
+                  Positioned(
+                    bottom: 50.h,
+                    left: 16.w,
+                    child: Row(
+                      children: [
+                        _buildStatCard(
+                            'ورزشکارها', _loadedAthletes.length.toString()),
+                        SizedBox(width: 10.w),
+                        _buildStatCard(
+                            'برنامه‌ها', 'N/A'), // بعداً با دیتا پر می‌شه
+                      ],
                     ),
-                  )
-                : const Icon(Icons.sync),
-            onPressed:
-                _isSyncing ? null : () => _syncData(context, ref, _isSyncing),
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterDialog(context, ref),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => ref.refresh(athletesProvider),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
+                ),
+              ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(8.w),
               child: TextField(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'جستجوی ورزشکار...',
-                  hintStyle: TextStyle(color: Colors.grey.shade600),
-                  prefixIcon:
-                      const Icon(Icons.search, color: AppColors.primary),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: const InputDecoration(
+                  hintText: 'جستجو...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
                 ),
-                onChanged: (query) {
-                  ref.read(searchQueryProvider.notifier).state = query;
+                onChanged: (value) {
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    ref.read(searchQueryProvider.notifier).state = value;
+                  });
                 },
               ),
             ),
           ),
-          Expanded(
-            child: athletesAsync.when(
-              data: (athletes) => _buildAthleteList(athletes, ref),
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: Wrap(
+                spacing: 8.w,
+                children: [
+                  CustomChip(
+                      label: 'مرد',
+                      isSelected: selectedFilters.contains('مرد'),
+                      onTap: () => _toggleFilter('مرد')),
+                  CustomChip(
+                      label: 'زن',
+                      isSelected: selectedFilters.contains('زن'),
+                      onTap: () => _toggleFilter('زن')),
+                  CustomChip(
+                      label: 'عضله‌سازی',
+                      isSelected: selectedFilters.contains('عضله‌سازی'),
+                      onTap: () => _toggleFilter('عضله‌سازی')),
+                  CustomChip(
+                      label: 'کاهش وزن',
+                      isSelected: selectedFilters.contains('کاهش وزن'),
+                      onTap: () => _toggleFilter('کاهش وزن')),
+                ],
               ),
-              error: (error, _) => Center(
-                child: Text(
-                  'خطا در دریافت داده‌ها: ${error.toString()}',
-                  style: TextStyle(color: Colors.red.shade700),
-                ),
-              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index == _loadedAthletes.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return AthleteCard(athlete: _loadedAthletes[index]);
+              },
+              childCount: _loadedAthletes.length + 1,
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          _fabController.forward().then((_) => _fabController.reverse());
+          await athleteRepo.syncAll();
+          // ignore: unused_result
+          ref.refresh(athletesProvider);
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('داده‌ها سینک شدند')),
+          );
+        },
         backgroundColor: AppColors.primary,
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AddEditAthletePage()),
+        child: RotationTransition(
+          turns: _fabAnimation,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Icon(Icons.sync),
+              if (queueCount > 0)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: CircleAvatar(
+                    radius: 8.r,
+                    backgroundColor: AppColors.error,
+                    child: Text(
+                      queueCount.toString(),
+                      style: TextStyle(fontSize: 10.sp, color: Colors.white),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
-  Widget _buildAthleteList(List<Athlete> athletes, WidgetRef ref) {
-    final query = ref.watch(searchQueryProvider);
-    final filter = ref.watch(filterProvider);
-
-    final filteredAthletes = athletes.where((athlete) {
-      final matchesSearch =
-          athlete.firstName.toLowerCase().contains(query.toLowerCase()) ||
-              athlete.lastName.toLowerCase().contains(query.toLowerCase());
-      final matchesFilter = filter == null || athlete.gender == filter;
-      return matchesSearch && matchesFilter;
-    }).toList();
-
-    if (filteredAthletes.isEmpty) {
-      return const Center(
-        child: Text(
-          'ورزشکاری یافت نشد!',
-          style: TextStyle(fontSize: 18, color: Colors.grey),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: filteredAthletes.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, index) => AthleteCard(
-        athlete: filteredAthletes[index],
-        onDelete: () => ref.refresh(athletesProvider),
+  Widget _buildStatCard(String label, String value) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        // ignore: deprecated_member_use
+        color: AppColors.primary.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(8.r),
       ),
-    );
-  }
-
-  void _syncData(BuildContext context, WidgetRef ref, bool isSyncing) async {
-    try {
-      setState(() => isSyncing = true);
-      await ref.read(athleteRepositoryProvider).syncDataToSupabase();
-      // ignore: unused_result
-      ref.refresh(athletesProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('داده‌ها با موفقیت سینک شدند'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطا در سینک داده‌ها: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      debugPrint(e.toString());
-    } finally {
-      setState(() => isSyncing = false);
-    }
-  }
-}
-
-void _showFilterDialog(BuildContext context, WidgetRef ref) {
-  final currentFilter = ref.watch(filterProvider);
-
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      title: const Center(child: Text('فیلتر بر اساس جنسیت')),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
         children: [
-          _FilterOption(
-            title: 'همه',
-            isSelected: currentFilter == null,
-            onTap: () {
-              ref.read(filterProvider.notifier).state = null;
-              Navigator.pop(context);
-            },
-          ),
-          _FilterOption(
-            title: 'مرد',
-            isSelected: currentFilter == 'مرد',
-            onTap: () {
-              ref.read(filterProvider.notifier).state = 'مرد';
-              Navigator.pop(context);
-            },
-          ),
-          _FilterOption(
-            title: 'زن',
-            isSelected: currentFilter == 'زن',
-            onTap: () {
-              ref.read(filterProvider.notifier).state = 'زن';
-              Navigator.pop(context);
-            },
-          ),
+          Text(label, style: TextStyle(fontSize: 12.sp, color: Colors.white)),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 16.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
-    ),
-  );
-}
-
-class _FilterOption extends StatelessWidget {
-  final String title;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _FilterOption({
-    required this.title,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(title),
-      trailing:
-          isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
-      onTap: onTap,
-      tileColor: isSelected ? AppColors.primary.withOpacity(0.1) : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
     );
+  }
+
+  void _toggleFilter(String filter) {
+    setState(() {
+      if (selectedFilters.contains(filter)) {
+        selectedFilters.remove(filter);
+      } else {
+        selectedFilters.add(filter);
+      }
+    });
   }
 }

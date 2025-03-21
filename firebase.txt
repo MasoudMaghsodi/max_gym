@@ -1,0 +1,31 @@
+a1@Masoud-Dev-2 max_gym % flutterfire configure
+? You have an existing `firebase.json` file and possibly already configured your project for Firebase. Would you prefer to reuse the values in your existing `firebase.json` file to configure you
+? You have an existing `firebase.json` file and possibly already configured your project for Firebase. Would you prefer to reuse the values in your existing `firebase.json` file to configure you
+✔ You have an existing `firebase.json` file and possibly already configured your project for Firebase. Would you prefer to reuse the values in your existing `firebase.json` file to configure your project? · no 
+i Found 1 Firebase projects.                                                                                                                                                                      
+✔ Select a Firebase project to configure your Flutter application with · max-gym-bf441 (max-gym)                                                                                                  
+✔ Which platforms should your configuration support (use arrow keys & space to select)? · android, ios, macos, windows                                                                            
+✔ Generated FirebaseOptions file /Users/a1/Documents/MaxGym/max_gym/lib/firebase_options.dart already exists, do you want to override it? · yes                                                   
+i Firebase android app com.example.max_gym registered.                                                                                                                                            
+i Firebase ios app com.example.maxGym registered.                                                                                                                                                 
+✔ Which macos bundle id do you want to use for this configuration, e.g. 'com.example.app'? · maxgym.app                                                                                           
+i Firebase macos app maxgym.app is not registered on Firebase project max-gym-bf441.                                                                                                              
+i Registered a new Firebase macos app on Firebase project max-gym-bf441.                                                                                                                          
+i Firebase windows app max_gym (windows) is not registered on Firebase project max-gym-bf441.                                                                                                     
+i Registered a new Firebase windows app on Firebase project max-gym-bf441.                                                                                                                        
+
+
+Firebase configuration file lib/firebase_options.dart generated successfully with the following Firebase apps:
+
+Platform  Firebase App Id
+android   1:246940218145:android:ff1e745d0a6d932d04c460
+ios       1:246940218145:ios:bd3ccb44d0e3064704c460
+macos     1:246940218145:ios:14780b727ad4202604c460
+windows   1:246940218145:web:1bf07c807d764f3404c460
+
+Learn more about using this file and next steps from the documentation:
+ > https://firebase.google.com/docs/flutter/setup
+
+
+
+

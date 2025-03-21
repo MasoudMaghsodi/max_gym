@@ -1,63 +1,50 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:max_gym/data/models/athlete_model.dart';
-import 'package:max_gym/data/models/workout_model.dart';
+import 'package:max_gym/services/isar_service.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class BackupService {
-  final Isar isar;
+  static Future<String> backupDatabase() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final isarFile = File('${dir.path}/default.isar');
+    if (!await isarFile.exists()) throw Exception('فایل دیتابیس پیدا نشد');
 
-  BackupService({required this.isar});
+    final bytes = await isarFile.readAsBytes();
+    final encryptedBytes = _encrypt(bytes);
+    final supabase = Supabase.instance.client;
+    final backupPath =
+        'backups/backup_${DateTime.now().millisecondsSinceEpoch}.isar';
+    await supabase.storage
+        .from('private')
+        .uploadBinary(backupPath, encryptedBytes);
 
-  /// اکسپورت داده‌ها به فایل JSON
-  Future<void> exportToJson(BuildContext context) async {
-    final athletes = await isar.athletes.where().findAll();
-    final workouts = await isar.workoutPlans.where().findAll();
-
-    final data = {
-      'athletes': athletes.map((a) => a.toMap()).toList(),
-      'workouts': workouts.map((w) => w.toMap()).toList(),
-    };
-
-    final jsonString = jsonEncode(data);
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/backup.json');
-
-    await file.writeAsString(jsonString);
-
-    // استفاده از BuildContext صحیح
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('بکاپ با موفقیت ذخیره شد: ${file.path}')),
-    );
+    return supabase.storage.from('private').getPublicUrl(backupPath);
   }
 
-  /// ایمپورت داده‌ها از فایل JSON
-  Future<void> importFromJson(BuildContext context) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/backup.json');
+  static Future<void> restoreDatabase(String backupUrl) async {
+    final supabase = Supabase.instance.client;
+    final response = await supabase.storage
+        .from('private')
+        .download(backupUrl.split('/').last);
+    final decryptedBytes = _decrypt(response);
+    final dir = await getApplicationDocumentsDirectory();
+    final isarFile = File('${dir.path}/default.isar');
+    await isarFile.writeAsBytes(decryptedBytes);
 
-    if (!await file.exists()) {
-      throw Exception('فایل بکاپ یافت نشد!');
-    }
+    await IsarService.init();
+  }
 
-    final jsonString = await file.readAsString();
-    final data = jsonDecode(jsonString) as Map<String, dynamic>;
+  static Uint8List _encrypt(Uint8List data) {
+    final key = utf8.encode('maxgymkey');
+    final hmac = Hmac(sha256, key);
+    final digest = hmac.convert(data);
+    return Uint8List.fromList(digest.bytes + data);
+  }
 
-    final athletes =
-        (data['athletes'] as List).map((a) => Athlete.fromMap(a)).toList();
-    final workouts =
-        (data['workouts'] as List).map((w) => WorkoutPlan.fromMap(w)).toList();
-
-    await isar.writeTxn(() async {
-      await isar.athletes.putAll(athletes);
-      await isar.workoutPlans.putAll(workouts);
-    });
-
-    // استفاده از BuildContext صحیح
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('داده‌ها با موفقیت بازیابی شدند')),
-    );
+  static Uint8List _decrypt(Uint8List data) {
+    return data.sublist(32);
   }
 }
